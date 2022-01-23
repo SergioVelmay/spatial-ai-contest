@@ -24,3 +24,11 @@ cd hand-landmarks
 ```
 python hand_landmarks.py
 ```
+
+```
+cd depth-recording
+```
+
+```
+python depth_recording.py
+```
