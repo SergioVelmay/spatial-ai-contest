@@ -1,6 +1,8 @@
 # spatial-ai-contest
 OpenCV Spatial AI Contest
 
+- Installation
+
 ```
 python -m venv venv
 ```
@@ -17,6 +19,8 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+- Hand landmarks demo
+
 ```
 cd hand-landmarks
 ```
@@ -25,10 +29,32 @@ cd hand-landmarks
 python hand_landmarks.py
 ```
 
+- Depth recording demo
+
 ```
 cd depth-recording
 ```
 
 ```
 python depth_recording.py
+```
+
+- Mouse events demo
+
+```
+cd mouse-events
+```
+
+```
+python mouse_events.py
+```
+
+- OAK-D Lite cameras
+
+```
+cd oakdlite-cameras
+```
+
+```
+python oakdlite_cameras.py
 ```
