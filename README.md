@@ -58,3 +58,13 @@ cd oakdlite-cameras
 ```
 python oakdlite_cameras.py
 ```
+
+- Picking detection
+
+```
+cd picking-detection
+```
+
+```
+python picking_detection.py
+```
