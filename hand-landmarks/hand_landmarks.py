@@ -19,7 +19,7 @@ class HandLandmarks:
                 hl_path="models/hand_landmarks.blob",
                 hl_score_threshold=0.4,
                 show_landmarks=True,
-                show_hand_box=False):
+                show_hand_box=True):
 
         self.pd_path = pd_path
         self.pd_score_threshold = pd_score_threshold
@@ -188,6 +188,16 @@ class HandLandmarks:
 
             if self.show_hand_box:
                 cv2.rectangle(frame, (draw_min_x, draw_min_y), (draw_max_x, draw_max_y), (36, 152, 0), 2)
+                x1_float = region.pd_box[0]
+                y1_float = region.pd_box[1]
+                x2_float = x1_float + region.pd_box[2]
+                y2_float = y1_float + region.pd_box[3]
+                new_h, new_w = frame.shape[:2]
+                x1 = int(x1_float*new_w)
+                y1 = int(y1_float*new_h)
+                x2 = int(x2_float*new_w)
+                y2 = int(y2_float*new_h)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (36, 152, 0), 2)
 
         return cropped_frame, region.handedness, hand_bbox, palmar_text
 
