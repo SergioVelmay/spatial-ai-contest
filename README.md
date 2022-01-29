@@ -49,7 +49,7 @@ cd mouse-events
 python mouse_events.py
 ```
 
-- OAK-D Lite cameras
+- OAK-D Lite cameras demo
 
 ```
 cd oakdlite-cameras
@@ -57,4 +57,14 @@ cd oakdlite-cameras
 
 ```
 python oakdlite_cameras.py
+```
+
+- Color depth align demo
+
+```
+cd color-depth-align
+```
+
+```
+python color_depth_align.py
 ```
