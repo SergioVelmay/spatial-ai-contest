@@ -172,7 +172,13 @@ class PickingDetection:
                 frameDisp = np.ascontiguousarray(frameDisp)
 
                 for i, region in enumerate(self.regions):
-                    self.draw_palm_rectangle(frameDisp, copiaColor, region)
+                    self.averageDepth, self.centroidX, self.centroidY = self.calc_spatials(self.x1, self.y1, self.x2, self.y2, frameDisp)
+
+                    xmin, ymin, xmax, ymax = self.get_roi_by_percent(0.5, self.x1, self.y1, self.x2, self.y2)
+
+                    cv2.rectangle(frameDisp, (xmin, ymin), (xmax, ymax), (255, 255, 255), 2)
+
+                    self.draw_palm_text(frameDisp, self.averageDepth, self.centroidX-10, self.centroidY)
 
                 cv2.imshow(depthWindowName, frameDisp)
 
@@ -187,17 +193,41 @@ class PickingDetection:
             if cv2.waitKey(1) == ord('q'):
                 break
 
-    def draw_palm_rectangle(self, frame, copia, region):
+    def draw_palm_rectangle(self, frame, copy, region):
         x1_float = region.pd_box[0]
         y1_float = region.pd_box[1]
         x2_float = x1_float + region.pd_box[2]
         y2_float = y1_float + region.pd_box[3]
-        new_h, new_w = copia.shape[:2]
-        x1 = int(x1_float*new_w) - self.pad_w
-        y1 = int(y1_float*new_h) - self.pad_h
-        x2 = int(x2_float*new_w) - self.pad_w
-        y2 = int(y2_float*new_h) - self.pad_h
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 255, 255), 2)
+        new_h, new_w = copy.shape[:2]
+        self.x1 = int(x1_float*new_w) - self.pad_w
+        self.y1 = int(y1_float*new_h) - self.pad_h
+        self.x2 = int(x2_float*new_w) - self.pad_w
+        self.y2 = int(y2_float*new_h) - self.pad_h
+        cv2.rectangle(frame, (self.x1, self.y1), (self.x2, self.y2), (255, 255, 255), 2)
+    
+    def draw_palm_text(self, frame, depth, pt1, pt2):
+        cv2.putText(frame, str(depth), (pt1, pt2), cv2.FONT_HERSHEY_DUPLEX, 0.4, (255, 255, 255))
+    
+    def calc_spatials(self, xmin, ymin, xmax, ymax, depth):
+        xmin, ymin, xmax, ymax = self.get_roi_by_percent(0.5, xmin, ymin, xmax, ymax)
+
+        depthROI = depth[ymin:ymax, xmin:xmax]
+
+        averageDepth = int(np.mean(depthROI[True]))
+
+        centroidX = int((xmax - xmin) / 2) + xmin
+        centroidY = int((ymax - ymin) / 2) + ymin
+
+        return (averageDepth, centroidX, centroidY)
+
+    def get_roi_by_percent(self, percent, xmin, ymin, xmax, ymax):
+        deltaX = int((xmax - xmin) * percent / 2)
+        deltaY = int((ymax - ymin) * percent / 2)
+        xmin += deltaX
+        ymin += deltaY
+        xmax -= deltaX
+        ymax -= deltaY
+        return xmin, ymin, xmax, ymax
 
 if __name__ == "__main__":
     picking_detection = PickingDetection()
