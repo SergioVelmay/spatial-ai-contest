@@ -69,7 +69,7 @@ cd color-depth-align
 python color_depth_align.py
 ```
 
-- Picking detection
+- Picking detection demo
 
 ```
 cd picking-detection
@@ -77,4 +77,14 @@ cd picking-detection
 
 ```
 python picking_detection.py
+```
+
+- JSON config file demo
+
+```
+cd json-config-file
+```
+
+```
+python json_config_file.py
 ```
