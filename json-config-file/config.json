@@ -1,1 +1,53 @@
-{"domain": "sergio", "language": "python", "date": "30/01/2022", "topic": "config file"}
+{
+    "BBB222": {
+        "Id": "BBB222",
+        "Area": {
+            "Point1st": {
+                "X": 2,
+                "Y": 2
+            },
+            "Point2nd": {
+                "X": 2,
+                "Y": 2
+            }
+        },
+        "Depth": {
+            "Min": "2",
+            "Max": "2"
+        }
+    },
+    "AAA111": {
+        "Id": "AAA111",
+        "Area": {
+            "Point1st": {
+                "X": 11,
+                "Y": 11
+            },
+            "Point2nd": {
+                "X": 11,
+                "Y": 11
+            }
+        },
+        "Depth": {
+            "Min": 111,
+            "Max": 1111
+        }
+    },
+    "CCC333": {
+        "Id": "CCC333",
+        "Area": {
+            "Point1st": {
+                "X": 3,
+                "Y": 3
+            },
+            "Point2nd": {
+                "X": 33,
+                "Y": 33
+            }
+        },
+        "Depth": {
+            "Min": 333,
+            "Max": 3333
+        }
+    }
+}
