@@ -68,3 +68,13 @@ cd color-depth-align
 ```
 python color_depth_align.py
 ```
+
+- Picking detection
+
+```
+cd picking-detection
+```
+
+```
+python picking_detection.py
+```
