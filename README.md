@@ -88,3 +88,13 @@ cd json-config-file
 ```
 python json_config_file.py
 ```
+
+- User interface demo
+
+```
+cd user-interface
+```
+
+```
+python user_interface.py
+```
