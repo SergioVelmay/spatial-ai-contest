@@ -24,6 +24,10 @@ class Window(Frame):
         Button(self, text="Test", command=self.test_click).pack()
 
         Button(self, text="Exit", command=self.exit_click).pack()
+
+        master.bind('<Motion>', self.mouse_motion)
+        master.bind('<Button-1>', self.mouse_left_click)
+        master.bind('<Button-3>', self.mouse_right_click)
     
     def test_click(self):
         print("EYE :", self.eye_value.get())
@@ -31,9 +35,21 @@ class Window(Frame):
 
     def exit_click(self):
         exit()
-        
+
+    def mouse_motion(self, event):
+        if self.eye_value.get():
+            print("(X:%s, Y:%s)" % (event.x, event.y))
+
+    def mouse_left_click(self, event):
+        if self.bulb_value.get():
+            print("(X:%s, Y:%s) LEFT CLICK" % (event.x, event.y))
+
+    def mouse_right_click(self, event):
+        if self.bulb_value.get():
+            print("(X:%s, Y:%s) RIGHT CLICK" % (event.x, event.y))
+
 root = Tk()
 app = Window(root)
 root.wm_title("Tkinter UI")
-root.geometry("200x400")
+root.geometry("400x300")
 root.mainloop()
