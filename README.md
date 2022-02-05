@@ -98,3 +98,13 @@ cd user-interface
 ```
 python user_interface.py
 ```
+
+- Picking detection demo
+
+```
+cd picking-detection
+```
+
+```
+python picking_detection.py
+```
