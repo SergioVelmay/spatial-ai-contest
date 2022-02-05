@@ -1,0 +1,71 @@
+[
+    {
+        "Name": "222BBB222",
+        "Rect": {
+            "TopLeft": {
+                "X": 2,
+                "Y": 2
+            },
+            "BottomRight": {
+                "X": 2,
+                "Y": 2
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 22,
+                "Y": 22
+            },
+            "UpperLevel": {
+                "X": 22,
+                "Y": 22
+            }
+        }
+    },
+    {
+        "Name": "111AAA111",
+        "Rect": {
+            "TopLeft": {
+                "X": 1,
+                "Y": 1
+            },
+            "BottonRight": {
+                "X": 1,
+                "Y": 1
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 11,
+                "Y": 11
+            },
+            "UpperLevel": {
+                "X": 11,
+                "Y": 11
+            }
+        }
+    },
+    {
+        "Name": "333CCC333",
+        "Rect": {
+            "TopLeft": {
+                "X": 3,
+                "Y": 3
+            },
+            "BottomRight": {
+                "X": 3,
+                "Y": 3
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 33,
+                "Y": 33
+            },
+            "UpperLevel": {
+                "X": 33,
+                "Y": 33
+            }
+        }
+    }
+]
