@@ -47,36 +47,44 @@ class PickingItem:
         self.Depth.SetUpperLevelPoint(Point(xUpper, yUpper))
 
 def PointFromJson(json: dict):
+    if json is None:
+        return None
     point = None
     if 'X' in json and 'Y' in json:
         point = Point(json['X'], json['Y'])
     return point
 
 def AreaFromJson(json: dict):
+    if json is None:
+        return None
     rect = None
     if 'TopLeft' in json:
         tl_pt = PointFromJson(json['TopLeft'])
-        if tl_pt != None:
+        if tl_pt is not None:
             rect = Rect(tl_pt.X, tl_pt.Y)
             if 'BottomRight' in json:
                 br_pt = PointFromJson(json['BottomRight'])
-                if br_pt != None:
+                if br_pt is not None:
                     rect.SetBottomRightPoint(br_pt.X, br_pt.Y)
     return rect
 
 def DepthFromJson(json: dict):
+    if json is None:
+        return None
     depth = None
     if 'LowerLevel' in json:
         lw_pt = PointFromJson(json['LowerLevel'])
-        if lw_pt != None:
+        if lw_pt is not None:
             depth = Depth(lw_pt.X, lw_pt.Y)
             if 'UpperLevel' in json:
                 up_pt = PointFromJson(json['UpperLevel'])
-                if up_pt != None:
+                if up_pt is not None:
                     depth.SetUpperLevelPoint(up_pt.X, up_pt.Y)
     return depth
 
 def PickingItemFromJson(json: dict):
+    if json is None:
+        return None
     item = None
     if 'Name' in json:
         item = PickingItem(json['Name'])
@@ -200,6 +208,22 @@ class SettingsItem():
         self.CancelButton.place(w=32, h=32, x=320, y=self.GetPositionY()+40)
         self.PlaceSettingsLabel()
 
+    def RemoveAllWidgets(self):
+        self.OrderLabel.place_forget()
+        self.NameLabel.place_forget()
+        self.EyeButton.place_forget()
+        self.BulbButton.place_forget()
+        self.EditButton.place_forget()
+        self.DeleteButton.place_forget()
+        self.UpButton.place_forget()
+        self.DownButton.place_forget()
+        self.NameEntry.place_forget()
+        self.RectButton.place_forget()
+        self.DepthButton.place_forget()
+        self.SaveButton.place_forget()
+        self.CancelButton.place_forget()
+        self.SettingsLabel.place_forget()
+
     def PlaceSettingsLabel(self):
         self.SettingsLabel.place(w=312, h=32, x=40, y=self.GetPositionY()+40)
 
@@ -214,13 +238,13 @@ class SettingsItem():
 
     def CopyPickingItem(self):
         self.EditItem = PickingItem(self.PickingItem.Name)
-        if self.PickingItem.Rect != None:
+        if self.PickingItem.Rect is not None:
             self.EditItem.SetRectTopLeftPoint(self.PickingItem.Rect.TopLeft.X, self.PickingItem.Rect.TopLeft.Y)
-            if self.PickingItem.Rect.BottomRight != None:
+            if self.PickingItem.Rect.BottomRight is not None:
                 self.EditItem.SetRectBottomRightPoint(self.PickingItem.Rect.BottomRight.X, self.PickingItem.Rect.BottomRight.Y)
-        if self.PickingItem.Depth != None:
+        if self.PickingItem.Depth is not None:
             self.EditItem.SetDepthLowerLevelPoint(self.PickingItem.Depth.LowerLevel.X, self.PickingItem.Depth.LowerLevel.Y)
-            if self.PickingItem.Depth.UpperLevel != None:
+            if self.PickingItem.Depth.UpperLevel is not None:
                 self.EditItem.SetDepthUpperLevelPoint(self.PickingItem.Depth.UpperLevel.X, self.PickingItem.Depth.UpperLevel.Y)
 
     def edit_click(self):
@@ -275,7 +299,7 @@ class PokaYoke():
 
         for index, item in enumerate(json):
             pick = PickingItemFromJson(item)
-            if pick != None:
+            if pick is not None:
                 self.AppendPickingSetting(pick, index)
         self.SetAddNewItemButton()
 
@@ -300,22 +324,29 @@ class PokaYoke():
             EnableWidget(self.AddButton)
         self.AddButton.place(w=150, h=32, x=40, y=self.Length * 80)
 
-    def SetLengthForAllItems(self):
-        for pick_item in self.PickingSettings:
-            pick_item.Length = self.Length
-
     def AddNewItemButtonClick(self):
         self.Length += 1
         pick_name = "NewItem#" + str(self.Length)
         pick_item = PickingItem(pick_name)
         list_index = self.Length - 1
-        self.SetLengthForAllItems()
-        self.PickingSettings[list_index - 1].SetOrderAndArrows()
+        if list_index > 0:
+            for item in self.PickingSettings:
+                item.Length = self.Length
+            self.PickingSettings[list_index - 1].SetOrderAndArrows()
         self.AppendPickingSetting(pick_item, list_index)
         self.PlaceAddNewItemButton()
     
     def DeleteItemButtonClick(self, index: int):
-        pass
+        self.PickingSettings[index].RemoveAllWidgets()
+        del self.PickingSettings[index]
+        self.Length = len(self.PickingSettings)
+        for index, item in enumerate(self.PickingSettings):
+            item.Length = self.Length
+            item.Index = index
+            item.SetOrderAndArrows()
+            item.PlaceAllWidgets()
+        self.PlaceAddNewItemButton()
+        self.SaveConfigurationFile()
 
     def UpdateItemButtonClick(self, index: int, item: PickingItem):
         pass
@@ -328,6 +359,12 @@ class PokaYoke():
         self.PickingSettings[new].SetOrderAndArrows()
         self.PickingSettings[old].PlaceAllWidgets()
         self.PickingSettings[new].PlaceAllWidgets()
+    
+    def SaveConfigurationFile(self):
+        config_data = [item.PickingItem for item in self.PickingSettings]
+        with open(CONFIG_FILE_NAME, "w") as json_file:
+            json.dump(config_data, json_file, cls=CustomEncoder, indent=4)
+            json_file.close()
 
 def Main():
     if os.path.isfile(CONFIG_FILE_NAME):
