@@ -35,16 +35,16 @@ class PickingItem:
         self.Depth = None
 
     def SetRectTopLeftPoint(self, xTop: int, yLeft: int):
-        self.Rect = Rect(Point(xTop, yLeft))
+        self.Rect = Rect(xTop, yLeft)
 
     def SetRectBottomRightPoint(self, xBottom: int, yRight: int):
-        self.Rect.SetBottomRightPoint(Point(xBottom, yRight))
+        self.Rect.SetBottomRightPoint(xBottom, yRight)
 
     def SetDepthLowerLevelPoint(self, xLower: int, yLower: int):
-        self.Depth = Depth(Point(xLower, yLower))
+        self.Depth = Depth(xLower, yLower)
 
     def SetDepthUpperLevelPoint(self, xUpper: int, yUpper: int):
-        self.Depth.SetUpperLevelPoint(Point(xUpper, yUpper))
+        self.Depth.SetUpperLevelPoint(xUpper, yUpper)
 
 def PointFromJson(json: dict):
     if json is None:
@@ -120,9 +120,10 @@ class Window():
         self.Root.mainloop()
 
 class SettingsItem():
-    def __init__(self, master: Frame, pick: PickingItem, index: int, length: int, 
+    def __init__(self, master: Frame, video: Frame, pick: PickingItem, index: int, length: int, 
         move: classmethod, update: classmethod, delete: classmethod):
         self.Master = master
+        self.Video = video
         self.PickingItem = pick
         self.Index = index
         self.Length = length
@@ -130,16 +131,15 @@ class SettingsItem():
         self.Update = update
         self.Delete = delete
         self.EditItem = None
+        self.MouseX = None
+        self.MouseY = None
 
         self.SetAllVariables()
         self.SetAllIconImages()
         self.SetAllWidgets()
         self.SetOrderAndArrows()
         self.PlaceAllWidgets()
-
-        self.Master.bind('<Motion>', self.mouse_motion)
-        self.Master.bind('<Button-1>', self.mouse_left_click)
-        self.Master.bind('<Button-3>', self.mouse_right_click)
+        self.BindMouseEvents()
 
     def SetAllVariables(self):
         self.EyeValue = BooleanVar(value=False)
@@ -172,19 +172,19 @@ class SettingsItem():
             variable=self.EyeValue, onvalue=True, offvalue=False, indicatoron=False)
         self.BulbButton = Checkbutton(self.Master, image=self.BulbOffIcon, selectimage=self.BulbOnIcon,
             variable=self.BulbValue, onvalue=True, offvalue=False, indicatoron=False)
-        self.EditButton = Checkbutton(self.Master, image=self.EditIcon, command=self.edit_click,
+        self.EditButton = Checkbutton(self.Master, image=self.EditIcon, command=self.EditButtonClick,
             variable=self.EditValue, onvalue=True, offvalue=False, indicatoron=False)
-        self.DeleteButton = Button(self.Master, image=self.DeleteIcon, command=self.delete_click)
-        self.UpButton = Button(self.Master, image=self.UpIcon, command=self.up_click)
-        self.DownButton = Button(self.Master, image=self.DownIcon, command=self.down_click)
+        self.DeleteButton = Button(self.Master, image=self.DeleteIcon, command=self.DeleteButtonClick)
+        self.UpButton = Button(self.Master, image=self.UpIcon, command=self.MoveUpButtonClick)
+        self.DownButton = Button(self.Master, image=self.DownIcon, command=self.MoveDownButtonClick)
         self.NameEntry = Entry(self.Master, textvariable=self.NameValue, font=font_normal, justify=CENTER)
-        self.RectButton = Checkbutton(self.Master, image=self.RectIcon,
+        self.RectButton = Checkbutton(self.Master, image=self.RectIcon, command=self.EditRectButtonClick,
             variable=self.RectValue, onvalue=True, offvalue=False, indicatoron=False)
-        self.DepthButton = Checkbutton(self.Master, image=self.DepthIcon,
+        self.DepthButton = Checkbutton(self.Master, image=self.DepthIcon, command=self.EditDepthButtonClick,
             variable=self.DepthValue, onvalue=True, offvalue=False, indicatoron=False)
-        self.SaveButton = Button(self.Master, image=self.SaveIcon, command=self.save_click)
-        self.CancelButton = Button(self.Master, image=self.CancelIcon, command=self.cancel_click)
-        self.SettingsLabel = Label(self.Master)
+        self.SaveButton = Button(self.Master, image=self.SaveIcon, command=self.SaveButtonClick)
+        self.CancelButton = Button(self.Master, image=self.CancelIcon, command=self.CancelButtonClick)
+        self.EditOptionsLabel = Label(self.Master)
 
     def GetItemOrder(self):
         return self.Index + 1
@@ -206,7 +206,13 @@ class SettingsItem():
         self.DepthButton.place(w=32, h=32, x=240, y=self.GetPositionY()+40)
         self.SaveButton.place(w=32, h=32, x=280, y=self.GetPositionY()+40)
         self.CancelButton.place(w=32, h=32, x=320, y=self.GetPositionY()+40)
-        self.PlaceSettingsLabel()
+        self.PlaceEditOptionsLabel()
+
+    def BindMouseEvents(self):
+        self.Video.bind('<Motion>', self.CaptureMouseMotionEvent, add="+")
+        self.Video.bind('<Button-1>', self.CaptureMouseLeftClickEvent, add="+")
+        self.Video.bind('<Button-3>', self.CaptureMouseRightClickEvent, add="+")
+        self.NameEntry.bind('<Button-1>', self.EditNameEntryClick)
 
     def RemoveAllWidgets(self):
         self.OrderLabel.place_forget()
@@ -222,10 +228,10 @@ class SettingsItem():
         self.DepthButton.place_forget()
         self.SaveButton.place_forget()
         self.CancelButton.place_forget()
-        self.SettingsLabel.place_forget()
+        self.EditOptionsLabel.place_forget()
 
-    def PlaceSettingsLabel(self):
-        self.SettingsLabel.place(w=312, h=32, x=40, y=self.GetPositionY()+40)
+    def PlaceEditOptionsLabel(self):
+        self.EditOptionsLabel.place(w=312, h=32, x=40, y=self.GetPositionY()+40)
 
     def SetOrderAndArrows(self):
         self.OrderLabel['text'] = str(self.GetItemOrder())
@@ -247,49 +253,93 @@ class SettingsItem():
             if self.PickingItem.Depth.UpperLevel is not None:
                 self.EditItem.SetDepthUpperLevelPoint(self.PickingItem.Depth.UpperLevel.X, self.PickingItem.Depth.UpperLevel.Y)
 
-    def edit_click(self):
-        if self.EditValue.get():
-            self.SettingsLabel.place_forget()
-            self.CopyPickingItem()
-        else:
-            self.PlaceSettingsLabel()
+    def RestoreEditOptions(self):
+        self.Edit = None
+        self.EditValue.set(False)
+        self.NameValue.set('')
+        self.RectValue.set(False)
+        self.DepthValue.set(False)
+        self.PlaceEditOptionsLabel()
 
-    def delete_click(self):
+    def EditButtonClick(self):
+        if self.EditValue.get():
+            self.EditOptionsLabel.place_forget()
+            self.CopyPickingItem()
+            self.NameValue.set(self.EditItem.Name)
+        else:
+            self.RestoreEditOptions()
+
+    def EditNameEntryClick(self, event):
+        if self.EditValue.get():
+            self.DepthValue.set(False)
+            self.RectValue.set(False)
+
+    def EditRectButtonClick(self):
+        if self.EditValue.get() and self.RectValue.get():
+            self.DepthValue.set(False)
+
+    def EditDepthButtonClick(self):
+        if self.EditValue.get() and self.DepthValue.get():
+            self.RectValue.set(False)
+
+    def DeleteButtonClick(self):
         answer = messagebox.askyesno(title='Delete Confirmation', message='Do you want to delete this item?')
         if answer:
             self.Delete(self.Index)
 
-    def save_click(self):
+    def SaveButtonClick(self):
         answer = messagebox.askyesno(title='Save Confirmation', message='Do you want to save the settings?')
         if answer:
-            self.Update(self.Index, self.Edit)
+            self.EditItem.Name = self.NameValue.get()
+            self.PickingItem = self.EditItem
+            self.NameLabel['text'] = self.PickingItem.Name
+            self.Update()
+            self.RestoreEditOptions()
 
-    def cancel_click(self):
+    def CancelButtonClick(self):
         answer = messagebox.askyesno(title='Cancel Confirmation', message='Do you want to cancel your changes?')
         if answer:
-            self.Edit = None
+            self.RestoreEditOptions()
 
-    def up_click(self):
+    def MoveUpButtonClick(self):
         old_index = self.Index
         new_index = self.Index - 1
         self.Move(old_index, new_index)
 
-    def down_click(self):
+    def MoveDownButtonClick(self):
         old_index = self.Index
         new_index = self.Index + 1
         self.Move(old_index, new_index)
 
-    def mouse_motion(self, event):
-        if self.EyeValue.get():
-            print('(x:%s, y:%s)' % (event.x, event.y))
+    def CaptureMouseMotionEvent(self, event):
+        if self.EditValue.get():
+            self.MouseX, self.MouseY = event.x, event.y
+            if self.RectValue.get():
+                if self.EditItem.Rect is not None and self.EditItem.Rect.TopLeft is not None:
+                    pass # print rectangle
+                else:
+                    pass #print cursor
+            if self.DepthValue.get():
+                pass # print circle
 
-    def mouse_left_click(self, event):
-        if self.BulbValue.get():
-            print('(x:%s, y:%s) LEFT CLICK' % (event.x, event.y))
+    def CaptureMouseLeftClickEvent(self, event):
+        if self.EditValue.get():
+            if self.RectValue.get():
+                if self.EditItem.Rect is not None and self.EditItem.Rect.BottomRight is None:
+                    self.EditItem.SetRectBottomRightPoint(event.x, event.y)
+                else:
+                    self.EditItem.SetRectTopLeftPoint(event.x, event.y)
+            if self.DepthValue.get():
+                if self.EditItem.Depth is not None and self.EditItem.Depth.UpperLevel is None:
+                    self.EditItem.SetDepthUpperLevelPoint(event.x, event.y)
+                else:
+                    self.EditItem.SetDepthLowerLevelPoint(event.x, event.y)
 
-    def mouse_right_click(self, event):
-        if self.BulbValue.get():
-            print('(x:%s, y:%s) RIGHT CLICK' % (event.x, event.y))
+    def CaptureMouseRightClickEvent(self, event):
+        if self.EditValue.get():
+            if self.RectValue.get():
+                if self.EditItem.Rect is not None and self.EditItem.Rect.BottomRight is None:
+                    self.EditItem.Rect = None
 
 class PokaYoke():
     def __init__(self, json: list):
@@ -305,7 +355,7 @@ class PokaYoke():
 
     def AppendPickingSetting(self, pick: PickingItem, index: int):
         self.PickingSettings.append(
-            SettingsItem(self.Window.SettingsFrame, pick, index, self.Length, 
+            SettingsItem(self.Window.SettingsFrame, self.Window.VideoFrame, pick, index, self.Length, 
                 self.MoveItemButtonClick, self.UpdateItemButtonClick, self.DeleteItemButtonClick))
     
     def SetAddNewItemButton(self):
@@ -335,6 +385,7 @@ class PokaYoke():
             self.PickingSettings[list_index - 1].SetOrderAndArrows()
         self.AppendPickingSetting(pick_item, list_index)
         self.PlaceAddNewItemButton()
+        self.SaveConfigurationFile()
     
     def DeleteItemButtonClick(self, index: int):
         self.PickingSettings[index].RemoveAllWidgets()
@@ -348,8 +399,8 @@ class PokaYoke():
         self.PlaceAddNewItemButton()
         self.SaveConfigurationFile()
 
-    def UpdateItemButtonClick(self, index: int, item: PickingItem):
-        pass
+    def UpdateItemButtonClick(self):
+        self.SaveConfigurationFile()
 
     def MoveItemButtonClick(self, old: int, new: int):
         self.PickingSettings[old].Index = new

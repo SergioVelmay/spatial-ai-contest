@@ -69,12 +69,58 @@
         }
     },
     {
-        "Name": "NewItem#4",
-        "Rect": null,
+        "Name": "444DDD444",
+        "Rect": {
+            "TopLeft": {
+                "X": 231,
+                "Y": 106
+            },
+            "BottomRight": {
+                "X": 355,
+                "Y": 262
+            }
+        },
         "Depth": null
     },
     {
-        "Name": "NewItem#5",
+        "Name": "555EEE555",
+        "Rect": {
+            "TopLeft": {
+                "X": 201,
+                "Y": 123
+            },
+            "BottomRight": {
+                "X": 354,
+                "Y": 255
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 316,
+                "Y": 263
+            },
+            "UpperLevel": {
+                "X": 318,
+                "Y": 120
+            }
+        }
+    },
+    {
+        "Name": "666FFF666",
+        "Rect": null,
+        "Depth": {
+            "LowerLevel": {
+                "X": 360,
+                "Y": 283
+            },
+            "UpperLevel": {
+                "X": 359,
+                "Y": 78
+            }
+        }
+    },
+    {
+        "Name": "NewItem#7",
         "Rect": null,
         "Depth": null
     }
