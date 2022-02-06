@@ -5,7 +5,7 @@ from tkinter import *
 from tkinter import messagebox
 
 CONFIG_FILE_NAME = 'config.json'
-MAX_CONFIG_ITEMS = 8
+MAX_PICKING_ITEMS = 8
 
 class Point:
     def __init__(self, x: int, y: int):
@@ -90,6 +90,12 @@ class CustomEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
 
+def DisableWidget(widget):
+    widget['state'] = DISABLED
+
+def EnableWidget(widget):
+    widget['state'] = NORMAL
+
 class Window():
     def __init__(self):
         self.Root = Tk()
@@ -99,23 +105,61 @@ class Window():
         self.SettingsFrame = Frame(self.Root, bg='yellow', width=440, height=680)
         self.SettingsFrame.place(x=780, y=20)
 
+        self.VideoFrame = Frame(self.Root, bg='cyan', width=640, height=360)
+        self.VideoFrame.place(x=70, y=20)
+
     def StartMainLoop(self):
         self.Root.mainloop()
 
 class SettingsItem():
-    def __init__(self, master: Frame, pick: PickingItem, index: int):
+    def __init__(self, master: Frame, pick: PickingItem, index: int, length: int, 
+        move: classmethod, update: classmethod, delete: classmethod):
         self.Master = master
-        self.Picking = pick
+        self.PickingItem = pick
         self.Index = index
-
-        font_bold = ('arial', 12, 'bold')
-        font_normal = ('arial', 12, 'normal')
+        self.Length = length
+        self.Move = move
+        self.Update = update
+        self.Delete = delete
+        self.EditItem = None
 
         self.SetAllVariables()
         self.SetAllIconImages()
+        self.SetAllWidgets()
+        self.SetOrderAndArrows()
+        self.PlaceAllWidgets()
 
+        self.Master.bind('<Motion>', self.mouse_motion)
+        self.Master.bind('<Button-1>', self.mouse_left_click)
+        self.Master.bind('<Button-3>', self.mouse_right_click)
+
+    def SetAllVariables(self):
+        self.EyeValue = BooleanVar(value=False)
+        self.BulbValue = BooleanVar(value=False)
+        self.EditValue = BooleanVar(value=False)
+        self.NameValue = StringVar(value='')
+        self.RectValue = BooleanVar(value=False)
+        self.DepthValue = BooleanVar(value=False)
+
+    def SetAllIconImages(self):
+        self.EyeOnIcon = PhotoImage(file='./assets/icon-eye-on.png')
+        self.EyeOffIcon = PhotoImage(file='./assets/icon-eye-off.png')
+        self.BulbOnIcon = PhotoImage(file='./assets/icon-bulb-on.png')
+        self.BulbOffIcon = PhotoImage(file='./assets/icon-bulb-off.png')
+        self.EditIcon = PhotoImage(file='./assets/icon-pen.png')
+        self.DeleteIcon = PhotoImage(file='./assets/icon-trash.png')
+        self.UpIcon = PhotoImage(file='./assets/icon-arrow-up.png')
+        self.DownIcon = PhotoImage(file='./assets/icon-arrow-down.png')
+        self.RectIcon = PhotoImage(file='./assets/icon-square.png')
+        self.DepthIcon = PhotoImage(file='./assets/icon-depth.png')
+        self.SaveIcon = PhotoImage(file='./assets/icon-save.png')
+        self.CancelIcon = PhotoImage(file='./assets/icon-cancel.png')
+
+    def SetAllWidgets(self):
+        font_bold = ('arial', 12, 'bold')
+        font_normal = ('arial', 12, 'normal')
         self.OrderLabel = Label(self.Master, font=font_bold, relief=SOLID)
-        self.NameLabel = Label(self.Master, text=self.Picking.Name, font=font_bold, relief=SOLID)
+        self.NameLabel = Label(self.Master, text=self.PickingItem.Name, font=font_bold, relief=SOLID)
         self.EyeButton = Checkbutton(self.Master, image=self.EyeOffIcon, selectimage=self.EyeOnIcon,
             variable=self.EyeValue, onvalue=True, offvalue=False, indicatoron=False)
         self.BulbButton = Checkbutton(self.Master, image=self.BulbOffIcon, selectimage=self.BulbOnIcon,
@@ -134,34 +178,6 @@ class SettingsItem():
         self.CancelButton = Button(self.Master, image=self.CancelIcon, command=self.cancel_click)
         self.SettingsLabel = Label(self.Master)
 
-        self.PlaceAllWidgets()
-
-        self.Master.bind('<Motion>', self.mouse_motion)
-        self.Master.bind('<Button-1>', self.mouse_left_click)
-        self.Master.bind('<Button-3>', self.mouse_right_click)
-
-    def SetAllVariables(self):
-        self.EyeValue = BooleanVar(value=False)
-        self.BulbValue = BooleanVar(value=False)
-        self.EditValue = BooleanVar(value=False)
-        self.NameValue = StringVar(value=self.Picking.Name)
-        self.RectValue = BooleanVar(value=False)
-        self.DepthValue = BooleanVar(value=False)
-
-    def SetAllIconImages(self):
-        self.EyeOnIcon = PhotoImage(file='./assets/icon-eye-on.png')
-        self.EyeOffIcon = PhotoImage(file='./assets/icon-eye-off.png')
-        self.BulbOnIcon = PhotoImage(file='./assets/icon-bulb-on.png')
-        self.BulbOffIcon = PhotoImage(file='./assets/icon-bulb-off.png')
-        self.EditIcon = PhotoImage(file='./assets/icon-pen.png')
-        self.DeleteIcon = PhotoImage(file='./assets/icon-trash.png')
-        self.UpIcon = PhotoImage(file='./assets/icon-arrow-up.png')
-        self.DownIcon = PhotoImage(file='./assets/icon-arrow-down.png')
-        self.RectIcon = PhotoImage(file='./assets/icon-square.png')
-        self.DepthIcon = PhotoImage(file='./assets/icon-depth.png')
-        self.SaveIcon = PhotoImage(file='./assets/icon-save.png')
-        self.CancelIcon = PhotoImage(file='./assets/icon-cancel.png')
-
     def GetItemOrder(self):
         return self.Index + 1
 
@@ -169,13 +185,6 @@ class SettingsItem():
         return self.Index * 80
 
     def PlaceAllWidgets(self):
-        self.OrderLabel['text'] = str(self.GetItemOrder())
-
-        if self.GetItemOrder() == 1:
-            self.UpButton['state'] = DISABLED
-        if self.GetItemOrder() == MAX_CONFIG_ITEMS:
-            self.DownButton['state'] = DISABLED
-
         self.OrderLabel.place(w=32, h=32, x=0, y=self.GetPositionY())
         self.NameLabel.place(w=150, h=32, x=40, y=self.GetPositionY())
         self.EyeButton.place(w=32, h=32, x=200, y=self.GetPositionY())
@@ -194,51 +203,57 @@ class SettingsItem():
     def PlaceSettingsLabel(self):
         self.SettingsLabel.place(w=312, h=32, x=40, y=self.GetPositionY()+40)
 
+    def SetOrderAndArrows(self):
+        self.OrderLabel['text'] = str(self.GetItemOrder())
+        EnableWidget(self.UpButton)
+        EnableWidget(self.DownButton)
+        if self.GetItemOrder() == 1:
+            DisableWidget(self.UpButton)
+        if self.GetItemOrder() == self.Length:
+            DisableWidget(self.DownButton)
+
+    def CopyPickingItem(self):
+        self.EditItem = PickingItem(self.PickingItem.Name)
+        if self.PickingItem.Rect != None:
+            self.EditItem.SetRectTopLeftPoint(self.PickingItem.Rect.TopLeft.X, self.PickingItem.Rect.TopLeft.Y)
+            if self.PickingItem.Rect.BottomRight != None:
+                self.EditItem.SetRectBottomRightPoint(self.PickingItem.Rect.BottomRight.X, self.PickingItem.Rect.BottomRight.Y)
+        if self.PickingItem.Depth != None:
+            self.EditItem.SetDepthLowerLevelPoint(self.PickingItem.Depth.LowerLevel.X, self.PickingItem.Depth.LowerLevel.Y)
+            if self.PickingItem.Depth.UpperLevel != None:
+                self.EditItem.SetDepthUpperLevelPoint(self.PickingItem.Depth.UpperLevel.X, self.PickingItem.Depth.UpperLevel.Y)
+
     def edit_click(self):
         if self.EditValue.get():
             self.SettingsLabel.place_forget()
-            print('EDITING ITEM...')
+            self.CopyPickingItem()
         else:
             self.PlaceSettingsLabel()
 
     def delete_click(self):
         answer = messagebox.askyesno(title='Delete Confirmation', message='Do you want to delete this item?')
         if answer:
-            print('DELETING ITEM...')
-
-    def up_click(self):
-        number = int(self.OrderLabel['text'])
-        number -= 1
-        self.OrderLabel['text'] = str(number)
-        if number == 1:
-            self.disable_widget(self.UpButton)
-        else:
-            self.enable_widget(self.DownButton)
-
-    def down_click(self):
-        number = int(self.OrderLabel['text'])
-        number += 1
-        self.OrderLabel['text'] = str(number)
-        if number == MAX_CONFIG_ITEMS:
-            self.disable_widget(self.DownButton)
-        else:
-            self.enable_widget(self.UpButton)
-
-    def disable_widget(self, widget):
-        widget['state'] = DISABLED
-
-    def enable_widget(self, widget):
-        widget['state'] = NORMAL
+            self.Delete(self.Index)
 
     def save_click(self):
         answer = messagebox.askyesno(title='Save Confirmation', message='Do you want to save the settings?')
         if answer:
-            print('SAVING SETTINGS...')
+            self.Update(self.Index, self.Edit)
 
     def cancel_click(self):
         answer = messagebox.askyesno(title='Cancel Confirmation', message='Do you want to cancel your changes?')
         if answer:
-            print('CANCELLING SETTINGS...')
+            self.Edit = None
+
+    def up_click(self):
+        old_index = self.Index
+        new_index = self.Index - 1
+        self.Move(old_index, new_index)
+
+    def down_click(self):
+        old_index = self.Index
+        new_index = self.Index + 1
+        self.Move(old_index, new_index)
 
     def mouse_motion(self, event):
         if self.EyeValue.get():
@@ -252,6 +267,68 @@ class SettingsItem():
         if self.BulbValue.get():
             print('(x:%s, y:%s) RIGHT CLICK' % (event.x, event.y))
 
+class PokaYoke():
+    def __init__(self, json: list):
+        self.Length = len(json)
+        self.PickingSettings = []
+        self.Window = Window()
+
+        for index, item in enumerate(json):
+            pick = PickingItemFromJson(item)
+            if pick != None:
+                self.AppendPickingSetting(pick, index)
+        self.SetAddNewItemButton()
+
+    def AppendPickingSetting(self, pick: PickingItem, index: int):
+        self.PickingSettings.append(
+            SettingsItem(self.Window.SettingsFrame, pick, index, self.Length, 
+                self.MoveItemButtonClick, self.UpdateItemButtonClick, self.DeleteItemButtonClick))
+    
+    def SetAddNewItemButton(self):
+        self.AddIcon = PhotoImage(file='./assets/icon-add.png')
+        font_normal = ('arial', 12, 'normal')
+        self.AddButton = Button(self.Window.SettingsFrame, text='Add new item', font=font_normal,
+            image=self.AddIcon, compound=LEFT, command=self.AddNewItemButtonClick)
+        if self.Length == MAX_PICKING_ITEMS:
+            DisableWidget(self.AddButton)
+        self.PlaceAddNewItemButton()
+
+    def PlaceAddNewItemButton(self):
+        if self.Length == MAX_PICKING_ITEMS:
+            DisableWidget(self.AddButton)
+        else:
+            EnableWidget(self.AddButton)
+        self.AddButton.place(w=150, h=32, x=40, y=self.Length * 80)
+
+    def SetLengthForAllItems(self):
+        for pick_item in self.PickingSettings:
+            pick_item.Length = self.Length
+
+    def AddNewItemButtonClick(self):
+        self.Length += 1
+        pick_name = "NewItem#" + str(self.Length)
+        pick_item = PickingItem(pick_name)
+        list_index = self.Length - 1
+        self.SetLengthForAllItems()
+        self.PickingSettings[list_index - 1].SetOrderAndArrows()
+        self.AppendPickingSetting(pick_item, list_index)
+        self.PlaceAddNewItemButton()
+    
+    def DeleteItemButtonClick(self, index: int):
+        pass
+
+    def UpdateItemButtonClick(self, index: int, item: PickingItem):
+        pass
+
+    def MoveItemButtonClick(self, old: int, new: int):
+        self.PickingSettings[old].Index = new
+        self.PickingSettings[new].Index = old
+        self.PickingSettings[old], self.PickingSettings[new] = self.PickingSettings[new], self.PickingSettings[old]
+        self.PickingSettings[old].SetOrderAndArrows()
+        self.PickingSettings[new].SetOrderAndArrows()
+        self.PickingSettings[old].PlaceAllWidgets()
+        self.PickingSettings[new].PlaceAllWidgets()
+
 def Main():
     if os.path.isfile(CONFIG_FILE_NAME):
         with open(CONFIG_FILE_NAME, 'r') as json_file:
@@ -264,14 +341,9 @@ def Main():
             json_file.write(default_json)
             json_file.close()
 
-    ui = Window()
-
-    for index, json_item in enumerate(config_data):
-        pick_item = PickingItemFromJson(json_item)
-        if pick_item != None:
-            SettingsItem(ui.SettingsFrame, pick_item, index)
+    poka_yoke = PokaYoke(config_data)
         
-    ui.StartMainLoop()
+    poka_yoke.Window.StartMainLoop()
 
 if __name__ == '__main__':
     Main()
