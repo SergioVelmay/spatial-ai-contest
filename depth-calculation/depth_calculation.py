@@ -4,7 +4,7 @@ import depthai as dai
 import mediapipe_utils as mpu
 from pathlib import Path
 
-class PickingDetection:
+class DepthCalculation:
     def __init__(self):
         self.colorWeight = 0.5
         self.depthWeight = 0.5
@@ -230,5 +230,5 @@ class PickingDetection:
         return xmin, ymin, xmax, ymax
 
 if __name__ == "__main__":
-    picking_detection = PickingDetection()
-    picking_detection.run()
+    depth_calculation = DepthCalculation()
+    depth_calculation.run()
