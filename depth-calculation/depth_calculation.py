@@ -76,10 +76,8 @@ class DepthCalculation:
         return resized
 
     def updateBlendWeights(self, percent_color):
-        global depthWeight
-        global colorWeight
-        colorWeight = float(percent_color)/100.0
-        depthWeight = 1.0 - colorWeight
+        self.colorWeight = float(percent_color)/100.0
+        self.depthWeight = 1.0 - self.colorWeight
 
     def palm_postprocess(self, inference):
         anchor_options = mpu.SSDAnchorOptions(
