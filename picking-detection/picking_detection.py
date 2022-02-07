@@ -1,6 +1,7 @@
 import os
 import json
 import cv2
+import threading
 import numpy as np
 import depthai as dai
 import mediapipe_utils as mpu
@@ -119,11 +120,18 @@ class Window():
         self.SettingsFrame = Frame(self.Root, bg='yellow', width=440, height=680)
         self.SettingsFrame.place(x=780, y=20)
 
-        self.VideoFrame = Frame(self.Root, bg='cyan', width=640, height=360)
+        self.VideoFrame = Frame(self.Root, bg='cyan', width=640, height=520)
         self.VideoFrame.place(x=70, y=20)
+
+        self.Root.protocol("WM_DELETE_WINDOW", self.OnClosingEvent)
 
     def StartMainLoop(self):
         self.Root.mainloop()
+    
+    def OnClosingEvent(self):
+        answer = messagebox.askokcancel("Quit", "Do you want to exit the program?")
+        if answer:
+            self.Root.destroy()
 
 class SettingsItem():
     def __init__(self, master: Frame, video: Frame, pick: PickingItem, index: int, length: int, 
@@ -350,59 +358,62 @@ class SettingsItem():
 class DepthCalculation:
     def __init__(self, video: Frame):
         self.VideoFrame = video
-        self.colorWeight = 0.5
-        self.depthWeight = 0.5
-        self.queueNames = []
+        self.ColorWeight = 0.5
+        self.DepthWeight = 0.5
+        self.QueueNames = []
 
-        self.palm_input_length = 128
-        self.palm_score_threshold = 0.6
-        self.palm_nms_threshold = 0.3
+        self.PalmInputLength = 128
+        self.PalmScoreThreshold = 0.6
+        self.PalmNmsThreshold = 0.3
 
-    def create_pipeline(self):
+        self.StreamingLabel = Label(self.VideoFrame, borderwidth=0, bg='white')
+        self.StreamingLabel.place( w=640, h=360, x=0, y=80)
+
+    def CreatePipeline(self):
         pipeline = dai.Pipeline()
         
-        camColor = pipeline.create(dai.node.ColorCamera)
-        left = pipeline.create(dai.node.MonoCamera)
-        right = pipeline.create(dai.node.MonoCamera)
-        stereo = pipeline.create(dai.node.StereoDepth)
+        cam_color = pipeline.create(dai.node.ColorCamera)
+        cam_left = pipeline.create(dai.node.MonoCamera)
+        cam_right = pipeline.create(dai.node.MonoCamera)
+        stereo_depth = pipeline.create(dai.node.StereoDepth)
 
-        colorOut = pipeline.create(dai.node.XLinkOut)
-        disparityOut = pipeline.create(dai.node.XLinkOut)
+        color_out = pipeline.create(dai.node.XLinkOut)
+        depth_out = pipeline.create(dai.node.XLinkOut)
 
-        colorOut.setStreamName("color")
-        self.queueNames.append("color")
-        disparityOut.setStreamName("depth")
-        self.queueNames.append("depth")
+        color_out.setStreamName("color")
+        self.QueueNames.append("color")
+        depth_out.setStreamName("depth")
+        self.QueueNames.append("depth")
 
         fps = 30
 
-        camColor.setBoardSocket(dai.CameraBoardSocket.RGB)
-        camColor.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
-        camColor.setFps(fps)
-        camColor.setIspScale(1, 3)
-        camColor.initialControl.setManualFocus(48)
+        cam_color.setBoardSocket(dai.CameraBoardSocket.RGB)
+        cam_color.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
+        cam_color.setFps(fps)
+        cam_color.setIspScale(1, 3)
+        cam_color.initialControl.setManualFocus(48)
 
-        left.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
-        left.setBoardSocket(dai.CameraBoardSocket.LEFT)
-        left.setFps(fps)
+        cam_left.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
+        cam_left.setBoardSocket(dai.CameraBoardSocket.LEFT)
+        cam_left.setFps(fps)
 
-        right.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
-        right.setBoardSocket(dai.CameraBoardSocket.RIGHT)
-        right.setFps(fps)
+        cam_right.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
+        cam_right.setBoardSocket(dai.CameraBoardSocket.RIGHT)
+        cam_right.setFps(fps)
 
-        stereo.initialConfig.setMedianFilter(dai.MedianFilter.MEDIAN_OFF)
-        stereo.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)
-        stereo.setLeftRightCheck(True)
-        stereo.setExtendedDisparity(False)
-        stereo.setSubpixel(False)
-        stereo.setDepthAlign(dai.CameraBoardSocket.RGB)
+        stereo_depth.initialConfig.setMedianFilter(dai.MedianFilter.MEDIAN_OFF)
+        stereo_depth.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_ACCURACY)
+        stereo_depth.setLeftRightCheck(True)
+        stereo_depth.setExtendedDisparity(False)
+        stereo_depth.setSubpixel(False)
+        stereo_depth.setDepthAlign(dai.CameraBoardSocket.RGB)
         
-        self.maxDisparity = stereo.initialConfig.getMaxDisparity()
+        self.MaxDisparity = stereo_depth.initialConfig.getMaxDisparity()
 
-        camColor.isp.link(colorOut.input)
-        left.out.link(stereo.left)
-        right.out.link(stereo.right)
-        stereo.disparity.link(disparityOut.input)
+        cam_color.isp.link(color_out.input)
+        cam_left.out.link(stereo_depth.left)
+        cam_right.out.link(stereo_depth.right)
+        stereo_depth.disparity.link(depth_out.input)
 
         palm_nn = pipeline.createNeuralNetwork()
         palm_nn.setBlobPath(str(Path("models/palm_detection.blob").resolve().absolute()))
@@ -415,17 +426,11 @@ class DepthCalculation:
 
         return pipeline
     
-    def to_planar(self, arr, shape):
-        resized = cv2.resize(arr, shape, interpolation=cv2.INTER_NEAREST).transpose(2,0,1)
+    def ToPlanar(self, array, shape):
+        resized = cv2.resize(array, shape, interpolation=cv2.INTER_NEAREST).transpose(2,0,1)
         return resized
 
-    def updateBlendWeights(self, percent_color):
-        global depthWeight
-        global colorWeight
-        colorWeight = float(percent_color)/100.0
-        depthWeight = 1.0 - colorWeight
-
-    def palm_postprocess(self, inference):
+    def PalmPostprocess(self, inference):
         anchor_options = mpu.SSDAnchorOptions(
             num_layers=4, 
             min_scale=0.1484375,
@@ -445,28 +450,23 @@ class DepthCalculation:
         nb_anchors = anchors.shape[0]
 
         scores = np.array(inference.getLayerFp16("classificators"), dtype=np.float16) 
-        bboxes = np.array(inference.getLayerFp16("regressors"), dtype=np.float16).reshape((nb_anchors, 18))
+        boxes = np.array(inference.getLayerFp16("regressors"), dtype=np.float16).reshape((nb_anchors, 18))
         
-        self.regions = mpu.decode_bboxes(self.palm_score_threshold, scores, bboxes, anchors)
-        self.regions = mpu.non_max_suppression(self.regions, self.palm_nms_threshold)
+        self.regions = mpu.decode_bboxes(self.PalmScoreThreshold, scores, boxes, anchors)
+        self.regions = mpu.non_max_suppression(self.regions, self.PalmNmsThreshold)
 
         mpu.detections_to_rect(self.regions)
         mpu.rect_transformation(self.regions, self.frame_size, self.frame_size)
 
-    def run(self):
-        device = dai.Device(self.create_pipeline())
+    def StartMainLoop(self):
+        threading.Thread(target=self.Run, daemon=True).start()
+
+    def Run(self):
+        device = dai.Device(self.CreatePipeline())
         device.startPipeline()
 
-        frameColor = None
-        frameDisp = None
-
-        colorWindowName = "color"
-        depthWindowName = "depth"
-        blendedWindowName = "color-depth"
-        cv2.namedWindow(colorWindowName)
-        cv2.namedWindow(depthWindowName)
-        cv2.namedWindow(blendedWindowName)
-        cv2.createTrackbar('RGB Weight %', blendedWindowName, int(self.colorWeight*100), 100, self.updateBlendWeights)
+        frame_color = None
+        frame_depth = None
 
         q_palm_in = device.getInputQueue(name="palm_in")
         q_palm_out = device.getOutputQueue(name="palm_out", maxSize=4, blocking=True)
@@ -485,105 +485,96 @@ class DepthCalculation:
             copiaColor = None
 
             if latestPacket["color"] is not None:
-                frameColor = latestPacket["color"].getCvFrame()
+                frame_color = latestPacket["color"].getCvFrame()
 
-                h, w = frameColor.shape[:2]
+                h, w = frame_color.shape[:2]
                 self.frame_size = max(h, w)
                 self.pad_h = int((self.frame_size - h)/2)
                 self.pad_w = int((self.frame_size - w)/2)
 
-                copiaColor = cv2.copyMakeBorder(frameColor, self.pad_h, self.pad_h, self.pad_w, self.pad_w, cv2.BORDER_CONSTANT)
+                copiaColor = cv2.copyMakeBorder(frame_color, self.pad_h, self.pad_h, self.pad_w, self.pad_w, cv2.BORDER_CONSTANT)
                 
                 frame_nn = dai.ImgFrame()
-                frame_nn.setWidth(self.palm_input_length)
-                frame_nn.setHeight(self.palm_input_length)
-                frame_nn.setData(self.to_planar(copiaColor, (self.palm_input_length, self.palm_input_length)))
+                frame_nn.setWidth(self.PalmInputLength)
+                frame_nn.setHeight(self.PalmInputLength)
+                frame_nn.setData(self.ToPlanar(copiaColor, (self.PalmInputLength, self.PalmInputLength)))
                 q_palm_in.send(frame_nn)
                 
                 inference = q_palm_out.get()
-                self.palm_postprocess(inference)
+                self.PalmPostprocess(inference)
 
                 for i, region in enumerate(self.regions):
-                    self.draw_palm_rectangle(frameColor, copiaColor, region)
-
-                cv2.imshow(colorWindowName, frameColor)
+                    self.DrawPalmRectangle(frame_color, copiaColor, region)
             
             if latestPacket["depth"] is not None:
-                frameDisp = latestPacket["depth"].getFrame()
-                frameDisp = (frameDisp * 255. / self.maxDisparity).astype(np.uint8)
-                frameDisp[frameDisp<128] = 0
-                frameDisp = cv2.applyColorMap(frameDisp, cv2.COLORMAP_JET)
-                frameDisp = np.ascontiguousarray(frameDisp)
+                frame_depth = latestPacket["depth"].getFrame()
+                frame_depth = (frame_depth * 255. / self.MaxDisparity).astype(np.uint8)
+                frame_depth[frame_depth<128] = 0
+                frame_depth = cv2.applyColorMap(frame_depth, cv2.COLORMAP_JET)
+                frame_depth = np.ascontiguousarray(frame_depth)
 
                 for i, region in enumerate(self.regions):
-                    self.averageDepth, self.centroidX, self.centroidY = self.calc_spatials(self.x1, self.y1, self.x2, self.y2, frameDisp)
+                    self.AverageDepth, self.CentroidX, self.CentroidY = self.CalcSpatials(self.X1, self.Y1, self.X2, self.Y2, frame_depth)
+                    xMin, yMin, xMax, yMax = self.GetRoiByPercent(0.5, self.X1, self.Y1, self.X2, self.Y2)
+                    cv2.rectangle(frame_depth, (xMin, yMin), (xMax, yMax), (255, 255, 255), 2)
+                    self.DrawPalmText(frame_depth, self.AverageDepth, self.CentroidX-10, self.CentroidY)
 
-                    xmin, ymin, xmax, ymax = self.get_roi_by_percent(0.5, self.x1, self.y1, self.x2, self.y2)
+            if frame_color is not None and frame_depth is not None:
+                frame_color = cv2.cvtColor(frame_color, cv2.COLOR_BGR2RGB)
+                if len(frame_depth.shape) < 3:
+                    frame_depth = cv2.cvtColor(frame_depth, cv2.COLOR_GRAY2RGB)
+                else:
+                    frame_depth = cv2.cvtColor(frame_depth, cv2.COLOR_BGR2RGB)
+                blended = cv2.addWeighted(frame_color, self.ColorWeight, frame_depth, self.DepthWeight, 0)
+                pil_image = Image.fromarray(blended)
+                image_tk = ImageTk.PhotoImage(image=pil_image)
+                self.StreamingLabel.image_tk = image_tk
+                self.StreamingLabel['image'] = image_tk
+                frame_color = None
+                frame_depth = None
 
-                    cv2.rectangle(frameDisp, (xmin, ymin), (xmax, ymax), (255, 255, 255), 2)
-
-                    self.draw_palm_text(frameDisp, self.averageDepth, self.centroidX-10, self.centroidY)
-
-                cv2.imshow(depthWindowName, frameDisp)
-
-            if frameColor is not None and frameDisp is not None:
-                if len(frameDisp.shape) < 3:
-                    frameDisp = cv2.cvtColor(frameDisp, cv2.COLOR_GRAY2BGR)
-                blended = cv2.addWeighted(frameColor, self.colorWeight, frameDisp, self.depthWeight, 0)
-                cv2.imshow(blendedWindowName, blended)
-                frameColor = None
-                frameDisp = None
-
-            if cv2.waitKey(1) == ord('q'):
-                break
-
-            pil_image = Image.fromarray(cv2_array)
-            image_tk = ImageTk.PhotoImage(image=pil_image)
-            window.streaming.image_tk = image_tk
-            window.streaming.config(image=image_tk)
-
-    def draw_palm_rectangle(self, frame, copy, region):
+    def DrawPalmRectangle(self, frame, copy, region):
         x1_float = region.pd_box[0]
         y1_float = region.pd_box[1]
         x2_float = x1_float + region.pd_box[2]
         y2_float = y1_float + region.pd_box[3]
         new_h, new_w = copy.shape[:2]
-        self.x1 = int(x1_float*new_w) - self.pad_w
-        self.y1 = int(y1_float*new_h) - self.pad_h
-        self.x2 = int(x2_float*new_w) - self.pad_w
-        self.y2 = int(y2_float*new_h) - self.pad_h
-        cv2.rectangle(frame, (self.x1, self.y1), (self.x2, self.y2), (255, 255, 255), 2)
+        self.X1 = int(x1_float*new_w) - self.pad_w
+        self.Y1 = int(y1_float*new_h) - self.pad_h
+        self.X2 = int(x2_float*new_w) - self.pad_w
+        self.Y2 = int(y2_float*new_h) - self.pad_h
+        cv2.rectangle(frame, (self.X1, self.Y1), (self.X2, self.Y2), (255, 255, 255), 2)
     
-    def draw_palm_text(self, frame, depth, pt1, pt2):
-        cv2.putText(frame, str(depth), (pt1, pt2), cv2.FONT_HERSHEY_DUPLEX, 0.4, (255, 255, 255))
+    def DrawPalmText(self, frame, depth, point1, point2):
+        cv2.putText(frame, str(depth), (point1, point2), cv2.FONT_HERSHEY_DUPLEX, 0.4, (255, 255, 255))
     
-    def calc_spatials(self, xmin, ymin, xmax, ymax, depth):
-        xmin, ymin, xmax, ymax = self.get_roi_by_percent(0.5, xmin, ymin, xmax, ymax)
+    def CalcSpatials(self, xMin, yMin, xMax, yMax, depth):
+        xMin, yMin, xMax, yMax = self.GetRoiByPercent(0.5, xMin, yMin, xMax, yMax)
 
-        depthROI = depth[ymin:ymax, xmin:xmax]
+        depth_roi = depth[yMin:yMax, xMin:xMax]
 
-        averageDepth = int(np.mean(depthROI[True]))
+        average_depth = int(np.mean(depth_roi[True]))
 
-        centroidX = int((xmax - xmin) / 2) + xmin
-        centroidY = int((ymax - ymin) / 2) + ymin
+        centroid_x = int((xMax - xMin) / 2) + xMin
+        centroid_y = int((yMax - yMin) / 2) + yMin
 
-        return (averageDepth, centroidX, centroidY)
+        return (average_depth, centroid_x, centroid_y)
 
-    def get_roi_by_percent(self, percent, xmin, ymin, xmax, ymax):
-        deltaX = int((xmax - xmin) * percent / 2)
-        deltaY = int((ymax - ymin) * percent / 2)
-        xmin += deltaX
-        ymin += deltaY
-        xmax -= deltaX
-        ymax -= deltaY
-        return xmin, ymin, xmax, ymax
+    def GetRoiByPercent(self, percent, xMin, yMin, xMax, yMax):
+        delta_x = int((xMax - xMin) * percent / 2)
+        delta_y = int((yMax - yMin) * percent / 2)
+        xMin += delta_x
+        yMin += delta_y
+        xMax -= delta_x
+        yMax -= delta_y
+        return xMin, yMin, xMax, yMax
 
-class PokaYoke():
+class PickingPokaYoke():
     def __init__(self, json: list):
         self.Length = len(json)
         self.PickingSettings = []
-        self.Window = Window()
-        self.Detection = DepthCalculation(self.Window.VideoFrame)
+        self.Interface = Window()
+        self.Detection = DepthCalculation(self.Interface.VideoFrame)
 
         for index, item in enumerate(json):
             pick = PickingItemFromJson(item)
@@ -593,13 +584,13 @@ class PokaYoke():
 
     def AppendPickingSetting(self, pick: PickingItem, index: int):
         self.PickingSettings.append(
-            SettingsItem(self.Window.SettingsFrame, self.Window.VideoFrame, pick, index, self.Length, 
+            SettingsItem(self.Interface.SettingsFrame, self.Interface.VideoFrame, pick, index, self.Length, 
                 self.MoveItemButtonClick, self.UpdateItemButtonClick, self.DeleteItemButtonClick))
     
     def SetAddNewItemButton(self):
         self.AddIcon = PhotoImage(file='./assets/icon-add.png')
         font_normal = ('arial', 12, 'normal')
-        self.AddButton = Button(self.Window.SettingsFrame, text='Add new item', font=font_normal,
+        self.AddButton = Button(self.Interface.SettingsFrame, text='Add new item', font=font_normal,
             image=self.AddIcon, compound=LEFT, command=self.AddNewItemButtonClick)
         if self.Length == MAX_PICKING_ITEMS:
             DisableWidget(self.AddButton)
@@ -667,9 +658,9 @@ def Main():
             json_file.write(default_json)
             json_file.close()
 
-    poka_yoke = PokaYoke(config_data)
-        
-    poka_yoke.Window.StartMainLoop()
+    picking_poka_yoke = PickingPokaYoke(config_data)
+    picking_poka_yoke.Detection.StartMainLoop()
+    picking_poka_yoke.Interface.StartMainLoop()
 
 if __name__ == '__main__':
     Main()
