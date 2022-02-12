@@ -124,8 +124,11 @@ class Window():
         self.SettingsFrame = Frame(self.MainFrame, bg='yellow', width=440, height=680)
         self.SettingsFrame.place(x=780, y=20)
 
-        self.VideoFrame = Frame(self.MainFrame, bg='cyan', width=640, height=520)
-        self.VideoFrame.place(x=70, y=20)
+        self.StreamingLabel = Frame(self.MainFrame, bg='cyan', width=640, height=520)
+        self.StreamingLabel.place(x=70, y=20)
+
+        self.VideoFrame = Label(self.StreamingLabel, borderwidth=0, bg='white')
+        self.VideoFrame.place( w=640, h=360, x=0, y=80)
 
         self.Root.protocol("WM_DELETE_WINDOW", self.OnClosingEvent)
 
@@ -147,9 +150,6 @@ class DepthCalculation:
         self.PalmInputLength = 128
         self.PalmScoreThreshold = 0.6
         self.PalmNmsThreshold = 0.3
-
-        self.StreamingLabel = Label(self.VideoFrame, borderwidth=0, bg='white')
-        self.StreamingLabel.place( w=640, h=360, x=0, y=80)
 
     def CreatePipeline(self):
         pipeline = dai.Pipeline()
@@ -310,8 +310,8 @@ class DepthCalculation:
                 blended = cv2.addWeighted(frame_color, self.ColorWeight, frame_depth, self.DepthWeight, 0)
                 pil_image = Image.fromarray(blended)
                 image_tk = ImageTk.PhotoImage(image=pil_image)
-                self.StreamingLabel.image_tk = image_tk
-                self.StreamingLabel['image'] = image_tk
+                self.VideoFrame.image_tk = image_tk
+                self.VideoFrame['image'] = image_tk
                 frame_color = None
                 frame_depth = None
 
@@ -335,7 +335,12 @@ class DepthCalculation:
 
         depth_roi = depth[yMin:yMax, xMin:xMax]
 
-        average_depth = int(np.mean(depth_roi[True]))
+        float_mean = np.mean(depth_roi[True])
+        
+        if np.isnan(float_mean):
+            average_depth = None
+        else:
+            average_depth = int(float_mean)
 
         centroid_x = int((xMax - xMin) / 2) + xMin
         centroid_y = int((yMax - yMin) / 2) + yMin
@@ -351,22 +356,6 @@ class DepthCalculation:
         yMax -= delta_y
         return xMin, yMin, xMax, yMax
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class PokaYokePicking():
     def __init__(self, json: list):
         self.Window = Window()
@@ -376,12 +365,8 @@ class PokaYokePicking():
         self.FONT_NORMAL = ('arial', 12, 'normal')
 
         self.SetAllAttributes()
-        self.SetAllPickingItems(json)
-        self.SetAllVariables()
         self.SetAllIconImages()
-        self.SetAllWidgets()
-        self.SetAllOrderAndArrows()
-        self.PlaceAllWidgets()
+        self.SetAllPickingItems(json)
         self.BindAllMouseEvents()
         self.SetAddNewItemButton()
 
@@ -413,26 +398,29 @@ class PokaYokePicking():
         self.RectValues = []
         self.DepthValues = []
 
+    def SetSettingsInterface(self, index: int, length: int):
+        self.SetVariables()
+        self.SetWidgets(index)
+        self.SetOrderAndArrows(index, length)
+        self.PlaceWidgets(index)
+
     def SetAllPickingItems(self, json: list):
         for index, item in enumerate(json):
             pick = PickingItemFromJson(item)
             if pick is not None:
-                self.PickingItems[index] = pick
+                self.PickingItems.append(pick)
+                self.SetSettingsInterface(index, len(json))
 
     def GetListLength(self):
         return len(self.PickingItems)
 
-    def SetVariables(self, index: int):
-        self.EyeValues[index] = BooleanVar(value=False)
-        self.BulbValues[index] = BooleanVar(value=False)
-        self.EditValues[index] = BooleanVar(value=False)
-        self.NameValues[index] = StringVar(value='')
-        self.RectValues[index] = BooleanVar(value=False)
-        self.DepthValues[index] = BooleanVar(value=False)
-
-    def SetAllVariables(self):
-        for index in range(self.GetListLength()):
-            self.SetVariables(index)
+    def SetVariables(self):
+        self.EyeValues.append(BooleanVar(value=False))
+        self.BulbValues.append(BooleanVar(value=False))
+        self.EditValues.append(BooleanVar(value=False))
+        self.NameValues.append(StringVar(value=''))
+        self.RectValues.append(BooleanVar(value=False))
+        self.DepthValues.append(BooleanVar(value=False))
 
     def SetAllIconImages(self):
         self.EyeOnIcon = PhotoImage(file='./assets/icon-eye-on.png')
@@ -447,90 +435,82 @@ class PokaYokePicking():
         self.DepthIcon = PhotoImage(file='./assets/icon-depth.png')
         self.SaveIcon = PhotoImage(file='./assets/icon-save.png')
         self.CancelIcon = PhotoImage(file='./assets/icon-cancel.png')
+        self.AddIcon = PhotoImage(file='./assets/icon-add.png')
 
-    def SetWidgets(self, index):
-        self.OrderLabels[index] = Label(self.Window.SettingsFrame, font=self.FONT_BOLD, relief=SOLID)
-        self.NameLabels[index] = Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=self.FONT_BOLD, relief=SOLID)
-        self.EyeButtons[index] = Checkbutton(self.Window.SettingsFrame, image=self.EyeOffIcon, selectimage=self.EyeOnIcon,
-            variable=self.EyeValues[index], onvalue=True, offvalue=False, indicatoron=False)
-        self.BulbButtons[index] = Checkbutton(self.Window.SettingsFrame, image=self.BulbOffIcon, selectimage=self.BulbOnIcon,
-            variable=self.BulbValues[index], onvalue=True, offvalue=False, indicatoron=False)
-        self.EditButtons[index] = Checkbutton(self.Window.SettingsFrame, image=self.EditIcon, command=lambda:self.EditButtonClick(index),
-            variable=self.EditValues[index], onvalue=True, offvalue=False, indicatoron=False)
-        self.DeleteButtons[index] = Button(self.Window.SettingsFrame, image=self.DeleteIcon, command=lambda:self.DeleteButtonClick(index))
-        self.UpButtons[index] = Button(self.Window.SettingsFrame, image=self.UpIcon, command=lambda:self.MoveUpButtonClick(index))
-        self.DownButtons[index] = Button(self.Window.SettingsFrame, image=self.DownIcon, command=lambda:self.MoveDownButtonClick(index))
-        self.NameEntries[index] = Entry(self.Window.SettingsFrame, textvariable=self.NameValue, font=self.FONT_NORMAL, justify=CENTER)
-        self.RectButtons[index] = Checkbutton(self.Window.SettingsFrame, image=self.RectIcon, command=lambda:self.EditRectButtonClick(index),
-            variable=self.RectValues[index], onvalue=True, offvalue=False, indicatoron=False)
-        self.DepthButtons[index] = Checkbutton(self.Window.SettingsFrame, image=self.DepthIcon, command=lambda:self.EditDepthButtonClick(index),
-            variable=self.DepthValues[index], onvalue=True, offvalue=False, indicatoron=False)
-        self.SaveButtons[index] = Button(self.Window.SettingsFrame, image=self.SaveIcon, command=lambda:self.SaveButtonClick(index))
-        self.CancelButtons[index] = Button(self.Window.SettingsFrame, image=self.CancelIcon, command=lambda:self.CancelButtonClick(index))
-        self.HiddenLabels[index] = Label(self.Window.SettingsFrame)
-
-    def SetAllWidgets(self):
-        for index in range(self.GetListLength()):
-            self.SetWidgets(index)
+    def AssignCommands(self, index: int):
+        self.EditButtons[index]['command'] = lambda: self.EditButtonClick(index)
+        self.DeleteButtons[index]['command'] = lambda: self.DeleteButtonClick(index)
+        self.UpButtons[index]['command'] = lambda: self.MoveUpButtonClick(index)
+        self.DownButtons[index]['command'] = lambda: self.MoveDownButtonClick(index)
+        self.RectButtons[index]['command'] = lambda: self.EditRectButtonClick(index)
+        self.DepthButtons[index]['command'] = lambda: self.EditDepthButtonClick(index)
+        self.SaveButtons[index]['command'] = lambda: self.SaveButtonClick(index)
+        self.CancelButtons[index]['command'] = lambda: self.CancelButtonClick(index)
+        self.NameEntries[index].bind('<Button-1>', lambda _: self.EditNameEntryClick(index))
     
-    def SetOrderAndArrows(self, index: int):
-        self.OrderLabels[index]['text'] = str(index+1)
+    def AssignVariables(self, index: int):
+        self.EyeButtons[index]['variable'] = self.EyeValues[index]
+        self.BulbButtons[index]['variable'] = self.BulbValues[index]
+        self.EditButtons[index]['variable'] = self.EditValues[index]
+        self.NameEntries[index]['textvariable'] = self.NameValues[index]
+        self.RectButtons[index]['variable'] = self.RectValues[index]
+        self.DepthButtons[index]['variable'] = self.DepthValues[index]
+
+    def SetWidgets(self, index: int):
+        self.OrderLabels.append(Label(self.Window.SettingsFrame, font=self.FONT_BOLD, relief=SOLID))
+        self.NameLabels.append(Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=self.FONT_BOLD, relief=SOLID))
+        self.EyeButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EyeOffIcon, selectimage=self.EyeOnIcon,
+            onvalue=True, offvalue=False, indicatoron=False))
+        self.BulbButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.BulbOffIcon, selectimage=self.BulbOnIcon,
+            onvalue=True, offvalue=False, indicatoron=False))
+        self.EditButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EditIcon,
+            onvalue=True, offvalue=False, indicatoron=False))
+        self.DeleteButtons.append(Button(self.Window.SettingsFrame, image=self.DeleteIcon))
+        self.UpButtons.append(Button(self.Window.SettingsFrame, image=self.UpIcon))
+        self.DownButtons.append(Button(self.Window.SettingsFrame, image=self.DownIcon))
+        self.NameEntries.append(Entry(self.Window.SettingsFrame, font=self.FONT_NORMAL, justify=CENTER))
+        self.RectButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.RectIcon,
+            onvalue=True, offvalue=False, indicatoron=False))
+        self.DepthButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.DepthIcon,
+            onvalue=True, offvalue=False, indicatoron=False))
+        self.SaveButtons.append(Button(self.Window.SettingsFrame, image=self.SaveIcon))
+        self.CancelButtons.append(Button(self.Window.SettingsFrame, image=self.CancelIcon))
+        self.HiddenLabels.append(Label(self.Window.SettingsFrame))
+        self.AssignVariables(index)
+        self.AssignCommands(index)
+    
+    def SetOrderAndArrows(self, index: int, length: int):
+        self.OrderLabels[index]['text'] = str(index + 1)
         EnableWidget(self.UpButtons[index])
         EnableWidget(self.DownButtons[index])
         if index == 0:
             DisableWidget(self.UpButtons[index])
-        if index == self.GetListLength()-1:
+        if index == length - 1:
             DisableWidget(self.DownButtons[index])
 
-    def SetAllOrderAndArrows(self):
-        for index in range(self.GetListLength()):
-            self.SetOrderAndArrows(index)
-
     def PlaceHiddenLabel(self, index: int):
-        self.HiddenLabel.place(w=312, h=32, x=40, y=index*80+40)
+        self.HiddenLabels[index].place(w=312, h=32, x=40, y=index*80+40)
 
     def PlaceWidgets(self, index: int):
-        self.OrderLabel.place(w=32, h=32, x=0, y=index*80)
-        self.NameLabel.place(w=150, h=32, x=40, y=index*80)
-        self.EyeButton.place(w=32, h=32, x=200, y=index*80)
-        self.BulbButton.place(w=32, h=32, x=240, y=index*80)
-        self.EditButton.place(w=32, h=32, x=280, y=index*80)
-        self.DeleteButton.place(w=32, h=32, x=320, y=index*80)
-        self.UpButton.place(w=32, h=32, x=360, y=index*80)
-        self.DownButton.place(w=32, h=32, x=400, y=index*80)
-        self.NameEntry.place(w=150, h=32, x=40, y=index*80+40)
-        self.RectButton.place(w=32, h=32, x=200, y=index*80+40)
-        self.DepthButton.place(w=32, h=32, x=240, y=index*80+40)
-        self.SaveButton.place(w=32, h=32, x=280, y=index*80+40)
-        self.CancelButton.place(w=32, h=32, x=320, y=index*80+40)
+        self.OrderLabels[index].place(w=32, h=32, x=0, y=index*80)
+        self.NameLabels[index].place(w=150, h=32, x=40, y=index*80)
+        self.EyeButtons[index].place(w=32, h=32, x=200, y=index*80)
+        self.BulbButtons[index].place(w=32, h=32, x=240, y=index*80)
+        self.EditButtons[index].place(w=32, h=32, x=280, y=index*80)
+        self.DeleteButtons[index].place(w=32, h=32, x=320, y=index*80)
+        self.UpButtons[index].place(w=32, h=32, x=360, y=index*80)
+        self.DownButtons[index].place(w=32, h=32, x=400, y=index*80)
+        self.NameEntries[index].place(w=150, h=32, x=40, y=index*80+40)
+        self.RectButtons[index].place(w=32, h=32, x=200, y=index*80+40)
+        self.DepthButtons[index].place(w=32, h=32, x=240, y=index*80+40)
+        self.SaveButtons[index].place(w=32, h=32, x=280, y=index*80+40)
+        self.CancelButtons[index].place(w=32, h=32, x=320, y=index*80+40)
         self.PlaceHiddenLabel(index)
 
-    def PlaceAllWidgets(self):
-        for index in range(self.GetListLength()):
-            self.PlaceWidgets(index)
-
     def BindAllMouseEvents(self):
-        self.Video.bind('<Motion>', self.CaptureMouseMotionEvent, add="+")
-        self.Video.bind('<Button-1>', self.CaptureMouseLeftClickEvent, add="+")
-        self.Video.bind('<Button-3>', self.CaptureMouseRightClickEvent, add="+")
-        for index in range(self.GetListLength()):
-            self.NameEntries[index].bind('<Button-1>', lambda:self.EditNameEntryClick(index), add='+')
-
-    def RemoveWidgets(self, index: int):
-        self.OrderLabels[index].place_forget()
-        self.NameLabels[index].place_forget()
-        self.EyeButtons[index].place_forget()
-        self.BulbButtons[index].place_forget()
-        self.EditButtons[index].place_forget()
-        self.DeleteButtons[index].place_forget()
-        self.UpButtons[index].place_forget()
-        self.DownButtons[index].place_forget()
-        self.NameEntries[index].place_forget()
-        self.RectButtons[index].place_forget()
-        self.DepthButtons[index].place_forget()
-        self.SaveButtons[index].place_forget()
-        self.CancelButtons[index].place_forget()
-        self.HiddenLabels[index].place_forget()
+        self.Window.VideoFrame.bind('<Motion>', self.CaptureMouseMotionEvent, add="+")
+        self.Window.VideoFrame.bind('<Button-1>', self.CaptureMouseLeftClickEvent, add="+")
+        self.Window.VideoFrame.bind('<Button-3>', self.CaptureMouseRightClickEvent, add="+")
 
     def CopyPickingItem(self, index: int):
         self.EditItem = PickingItem(self.PickingItems[index].Name)
@@ -569,13 +549,29 @@ class PokaYokePicking():
             self.DepthValues[index].set(False)
 
     def EditDepthButtonClick(self, index: int):
-        if self.EditValues[index].get() and self.DepthValue[index].get():
+        if self.EditValues[index].get() and self.DepthValues[index].get():
             self.RectValues[index].set(False)
+
+    def PlaceAffectedItems(self, del_index: int):
+        length = self.GetListLength()
+        if length != 0 and del_index == length:
+            self.SetOrderAndArrows(del_index - 1, length)
+        else:
+            for index in range(del_index, length):
+                self.SetOrderAndArrows(index, length)
+                self.AssignVariables(index)
+                self.AssignCommands(index)
+                self.PlaceWidgets(index)
 
     def DeleteButtonClick(self, index: int):
         answer = messagebox.askyesno(title='Delete Confirmation', message='Do you want to delete this item?')
         if answer:
-            self.Delete(index) # TODO Delete Function
+            del self.PickingItems[index]
+            self.SaveConfigurationFile()
+            self.RemoveWidgets(index)
+            self.RemoveVariables(index)
+            self.PlaceAffectedItems(index)
+            self.PlaceAddNewItemButton()
 
     def SaveButtonClick(self, index: int):
         answer = messagebox.askyesno(title='Save Confirmation', message='Do you want to save the settings?')
@@ -583,7 +579,7 @@ class PokaYokePicking():
             self.EditItem.Name = self.NameValues[index].get()
             self.PickingItems[index] = self.EditItem
             self.NameLabels[index]['text'] = self.PickingItems[index].Name
-            self.Update() # TODO Update Function
+            self.SaveConfigurationFile()
             self.RestoreEditOptions(index)
 
     def CancelButtonClick(self, index: int):
@@ -591,115 +587,171 @@ class PokaYokePicking():
         if answer:
             self.RestoreEditOptions(index)
 
+    def MoveSettingsInterface(self, index: int, new_index: int):
+        self.PickingItems[index], self.PickingItems[new_index] = self.PickingItems[new_index], self.PickingItems[index]
+        self.SaveConfigurationFile()
+        self.SwapWidgets(index, new_index)
+        self.SwapVariables(index, new_index)
+        self.AssignVariables(index)
+        self.AssignVariables(new_index)
+        self.AssignCommands(index)
+        self.AssignCommands(new_index)
+        self.PlaceWidgets(index)
+        self.PlaceWidgets(new_index)
+        length = self.GetListLength()
+        self.SetOrderAndArrows(index, length)
+        self.SetOrderAndArrows(new_index, length)
+
     def MoveUpButtonClick(self, index: int):
-        old_index = index
         new_index = index - 1
-        self.Move(old_index, new_index) # TODO Move Function
+        self.MoveSettingsInterface(index, new_index)
 
     def MoveDownButtonClick(self, index: int):
-        old_index = index
         new_index = index + 1
-        self.Move(old_index, new_index) # TODO Move Function
+        self.MoveSettingsInterface(index, new_index)
+
+    def IsAnyItemBeingEdited(self):
+        boolean_list = [value.get() for value in self.EditValues]
+        editing_item = True in boolean_list
+        if editing_item:
+            item_index = boolean_list.index(editing_item)
+            return editing_item, item_index
+        else:
+            return editing_item, None
 
     def CaptureMouseMotionEvent(self, event: EventType):
-        if self.EditValue.get():
+        print('MOTION')
+        editing, index = self.IsAnyItemBeingEdited()
+        if editing:
             self.MouseX, self.MouseY = event.x, event.y
-            if self.RectValue.get():
+            print(index, self.MouseX, self.MouseY)
+            if self.RectValues[index].get():
                 if self.EditItem.Rect is not None and self.EditItem.Rect.TopLeft is not None:
-                    pass # print rectangle
+                    pass # TODO print rectangle
                 else:
-                    pass #print cursor
-            if self.DepthValue.get():
-                pass # print circle
+                    pass # TODO print cursor
+            if self.DepthValues[index].get():
+                pass # TODO print circle
 
     def CaptureMouseLeftClickEvent(self, event: EventType):
-        if self.EditValue.get():
+        print('LEFT')
+        editing, index = self.IsAnyItemBeingEdited()
+        if editing:
             self.MouseX, self.MouseY = event.x, event.y
-            if self.RectValue.get():
+            print(index, self.MouseX, self.MouseY)
+            if self.RectValues[index].get():
                 if self.EditItem.Rect is not None and self.EditItem.Rect.BottomRight is None:
-                    self.EditItem.SetRectBottomRightPoint(event.x, event.y)
+                    self.EditItem.SetRectBottomRightPoint(self.MouseX, self.MouseY)
                 else:
-                    self.EditItem.SetRectTopLeftPoint(event.x, event.y)
-            if self.DepthValue.get():
+                    self.EditItem.SetRectTopLeftPoint(self.MouseX, self.MouseY)
+            if self.DepthValues[index].get():
                 if self.EditItem.Depth is not None and self.EditItem.Depth.UpperLevel is None:
-                    self.EditItem.SetDepthUpperLevelPoint(event.x, event.y)
+                    self.EditItem.SetDepthUpperLevelPoint(self.MouseX, self.MouseY)
                 else:
-                    self.EditItem.SetDepthLowerLevelPoint(event.x, event.y)
+                    self.EditItem.SetDepthLowerLevelPoint(self.MouseX, self.MouseY)
 
     def CaptureMouseRightClickEvent(self, event: EventType):
-        if self.EditValue.get():
+        print('RIGHT')
+        editing, index = self.IsAnyItemBeingEdited()
+        if editing:
             self.MouseX, self.MouseY = event.x, event.y
-            if self.RectValue.get():
+            print(index, self.MouseX, self.MouseY)
+            if self.RectValues[index].get():
                 if self.EditItem.Rect is not None and self.EditItem.Rect.BottomRight is None:
                     self.EditItem.Rect = None
 
-
-
-
-
-
-
-
-
-
-
-
     def SetAddNewItemButton(self):
-        self.AddIcon = PhotoImage(file='./assets/icon-add.png')
         self.AddButton = Button(self.Window.SettingsFrame, text='Add new item', font=self.FONT_NORMAL,
             image=self.AddIcon, compound=LEFT, command=self.AddNewItemButtonClick)
-        if self.Length == MAX_PICKING_ITEMS:
-            DisableWidget(self.AddButton)
         self.PlaceAddNewItemButton()
 
     def PlaceAddNewItemButton(self):
-        if self.Length == MAX_PICKING_ITEMS:
+        if self.GetListLength() == MAX_PICKING_ITEMS:
             DisableWidget(self.AddButton)
         else:
             EnableWidget(self.AddButton)
-        self.AddButton.place(w=150, h=32, x=40, y=self.Length * 80)
+        self.AddButton.place(w=150, h=32, x=40, y=self.GetListLength()*80)
 
     def AddNewItemButtonClick(self):
-        self.Length += 1
-        pick_name = "NewItem#" + str(self.Length)
+        index = self.GetListLength()
+        pick_name = "NewItem#" + str(index + 1)
         pick_item = PickingItem(pick_name)
-        list_index = self.Length - 1
-        if list_index > 0:
-            for item in self.PickingSettings:
-                item.Length = self.Length
-            self.PickingSettings[list_index - 1].SetOrderAndArrows()
-        self.AppendPickingSetting(pick_item, list_index)
-        self.PlaceAddNewItemButton()
-        self.SaveConfigurationFile()
-    
-    def DeleteItemButtonClick(self, index: int):
-        self.PickingSettings[index].RemoveAllWidgets()
-        del self.PickingSettings[index]
-        self.Length = len(self.PickingSettings)
-        for index, item in enumerate(self.PickingSettings):
-            item.Length = self.Length
-            item.Index = index
-            item.SetOrderAndArrows()
-            item.PlaceAllWidgets()
+        self.PickingItems.append(pick_item)
+        length = self.GetListLength()
+        if index > 0:
+            self.SetOrderAndArrows(index - 1, length)
+        self.SetSettingsInterface(index, length)
         self.PlaceAddNewItemButton()
         self.SaveConfigurationFile()
 
-    def UpdateItemButtonClick(self):
-        self.SaveConfigurationFile()
+    def SwapWidgets(self, index: int, new_index: int):
+        self.OrderLabels[index], self.OrderLabels[new_index] = self.OrderLabels[new_index], self.OrderLabels[index]
+        self.NameLabels[index], self.NameLabels[new_index] = self.NameLabels[new_index], self.NameLabels[index]
+        self.EyeButtons[index], self.EyeButtons[new_index] = self.EyeButtons[new_index], self.EyeButtons[index]
+        self.BulbButtons[index], self.BulbButtons[new_index] = self.BulbButtons[new_index], self.BulbButtons[index]
+        self.EditButtons[index], self.EditButtons[new_index] = self.EditButtons[new_index], self.EditButtons[index]
+        self.DeleteButtons[index], self.DeleteButtons[new_index] = self.DeleteButtons[new_index], self.DeleteButtons[index]
+        self.UpButtons[index], self.UpButtons[new_index] = self.UpButtons[new_index], self.UpButtons[index]
+        self.DownButtons[index], self.DownButtons[new_index] = self.DownButtons[new_index], self.DownButtons[index]
+        self.NameEntries[index], self.NameEntries[new_index] = self.NameEntries[new_index], self.NameEntries[index]
+        self.RectButtons[index], self.RectButtons[new_index] = self.RectButtons[new_index], self.RectButtons[index]
+        self.DepthButtons[index], self.DepthButtons[new_index] = self.DepthButtons[new_index], self.DepthButtons[index]
+        self.SaveButtons[index], self.SaveButtons[new_index] = self.SaveButtons[new_index], self.SaveButtons[index]
+        self.CancelButtons[index], self.CancelButtons[new_index] = self.CancelButtons[new_index], self.CancelButtons[index]
+        self.HiddenLabels[index], self.HiddenLabels[new_index] = self.HiddenLabels[new_index], self.HiddenLabels[index]
 
-    def MoveItemButtonClick(self, old: int, new: int):
-        self.PickingSettings[old].Index = new
-        self.PickingSettings[new].Index = old
-        self.PickingSettings[old], self.PickingSettings[new] = self.PickingSettings[new], self.PickingSettings[old]
-        self.PickingSettings[old].SetOrderAndArrows()
-        self.PickingSettings[new].SetOrderAndArrows()
-        self.PickingSettings[old].PlaceAllWidgets()
-        self.PickingSettings[new].PlaceAllWidgets()
+    def SwapVariables(self, index: int, new_index: int):
+        self.EyeValues[index], self.EyeValues[new_index] = self.EyeValues[new_index], self.EyeValues[index]
+        self.BulbValues[index], self.BulbValues[new_index] = self.BulbValues[new_index], self.BulbValues[index]
+        self.EditValues[index], self.EditValues[new_index] = self.EditValues[new_index], self.EditValues[index]
+        self.NameValues[index], self.NameValues[new_index] = self.NameValues[new_index], self.NameValues[index]
+        self.RectValues[index], self.RectValues[new_index] = self.RectValues[new_index], self.RectValues[index]
+        self.DepthValues[index], self.DepthValues[new_index] = self.DepthValues[new_index], self.DepthValues[index]
+
+    def ForgetWidgets(self, index: int):
+        self.OrderLabels[index].place_forget()
+        self.NameLabels[index].place_forget()
+        self.EyeButtons[index].place_forget()
+        self.BulbButtons[index].place_forget()
+        self.EditButtons[index].place_forget()
+        self.DeleteButtons[index].place_forget()
+        self.UpButtons[index].place_forget()
+        self.DownButtons[index].place_forget()
+        self.NameEntries[index].place_forget()
+        self.RectButtons[index].place_forget()
+        self.DepthButtons[index].place_forget()
+        self.SaveButtons[index].place_forget()
+        self.CancelButtons[index].place_forget()
+        self.HiddenLabels[index].place_forget()
+
+    def RemoveWidgets(self, index: int):
+        self.ForgetWidgets(index)
+        del self.OrderLabels[index]
+        del self.NameLabels[index]
+        del self.EyeButtons[index]
+        del self.BulbButtons[index]
+        del self.EditButtons[index]
+        del self.DeleteButtons[index]
+        del self.UpButtons[index]
+        del self.DownButtons[index]
+        del self.NameEntries[index]
+        del self.RectButtons[index]
+        del self.DepthButtons[index]
+        del self.SaveButtons[index]
+        del self.CancelButtons[index]
+        del self.HiddenLabels[index]
+
+    def RemoveVariables(self, index: int):
+        del self.EyeValues[index]
+        del self.BulbValues[index]
+        del self.EditValues[index]
+        del self.NameValues[index]
+        del self.RectValues[index]
+        del self.DepthValues[index]
     
     def SaveConfigurationFile(self):
-        config_data = [item.PickingItem for item in self.PickingSettings]
         with open(CONFIG_FILE_NAME, "w") as json_file:
-            json.dump(config_data, json_file, cls=CustomEncoder, indent=4)
+            json.dump(self.PickingItems, json_file, cls=CustomEncoder, indent=4)
             json_file.close()
 
 def Main():
