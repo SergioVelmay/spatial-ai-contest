@@ -108,3 +108,13 @@ cd picking-detection
 ```
 python picking_detection.py
 ```
+
+- Poka-Yoke picking demo
+
+```
+cd poka-yoke-picking
+```
+
+```
+python poka_yoke_picking.py
+```
