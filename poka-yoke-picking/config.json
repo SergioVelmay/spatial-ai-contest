@@ -1,0 +1,144 @@
+[
+    {
+        "Name": "111AAA111",
+        "Rect": {
+            "TopLeft": {
+                "X": 1,
+                "Y": 1
+            },
+            "BottomRight": {
+                "X": 1,
+                "Y": 1
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 11,
+                "Y": 11
+            },
+            "UpperLevel": {
+                "X": 11,
+                "Y": 11
+            }
+        }
+    },
+    {
+        "Name": "222BBB222",
+        "Rect": {
+            "TopLeft": {
+                "X": 2,
+                "Y": 2
+            },
+            "BottomRight": {
+                "X": 2,
+                "Y": 2
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 22,
+                "Y": 22
+            },
+            "UpperLevel": {
+                "X": 22,
+                "Y": 22
+            }
+        }
+    },
+    {
+        "Name": "CurrentItem3",
+        "Rect": {
+            "TopLeft": {
+                "X": 330,
+                "Y": 7
+            },
+            "BottomRight": {
+                "X": 450,
+                "Y": 179
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 362,
+                "Y": 149
+            },
+            "UpperLevel": {
+                "X": 458,
+                "Y": 62
+            }
+        }
+    },
+    {
+        "Name": "444DDD444",
+        "Rect": {
+            "TopLeft": {
+                "X": 231,
+                "Y": 106
+            },
+            "BottomRight": {
+                "X": 355,
+                "Y": 262
+            }
+        },
+        "Depth": null
+    },
+    {
+        "Name": "555EEE555",
+        "Rect": {
+            "TopLeft": {
+                "X": 201,
+                "Y": 123
+            },
+            "BottomRight": {
+                "X": 354,
+                "Y": 255
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 316,
+                "Y": 263
+            },
+            "UpperLevel": {
+                "X": 318,
+                "Y": 120
+            }
+        }
+    },
+    {
+        "Name": "666FFF666",
+        "Rect": null,
+        "Depth": {
+            "LowerLevel": {
+                "X": 360,
+                "Y": 283
+            },
+            "UpperLevel": {
+                "X": 359,
+                "Y": 78
+            }
+        }
+    },
+    {
+        "Name": "NewItem#7",
+        "Rect": null,
+        "Depth": null
+    },
+    {
+        "Name": "888",
+        "Rect": {
+            "TopLeft": {
+                "X": 443,
+                "Y": 207
+            },
+            "BottomRight": null
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 468,
+                "Y": 314
+            },
+            "UpperLevel": null
+        }
+    }
+]
