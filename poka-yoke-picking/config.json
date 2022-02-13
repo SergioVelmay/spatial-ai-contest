@@ -46,25 +46,25 @@
         }
     },
     {
-        "Name": "333CCC333",
+        "Name": "CurrentItem3",
         "Rect": {
             "TopLeft": {
-                "X": 3,
-                "Y": 3
+                "X": 330,
+                "Y": 7
             },
             "BottomRight": {
-                "X": 3,
-                "Y": 3
+                "X": 450,
+                "Y": 179
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 33,
-                "Y": 33
+                "X": 362,
+                "Y": 149
             },
             "UpperLevel": {
-                "X": 33,
-                "Y": 33
+                "X": 458,
+                "Y": 62
             }
         }
     },
@@ -123,5 +123,22 @@
         "Name": "NewItem#7",
         "Rect": null,
         "Depth": null
+    },
+    {
+        "Name": "888",
+        "Rect": {
+            "TopLeft": {
+                "X": 443,
+                "Y": 207
+            },
+            "BottomRight": null
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 468,
+                "Y": 314
+            },
+            "UpperLevel": null
+        }
     }
 ]
