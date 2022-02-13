@@ -13,6 +13,9 @@ from PIL import ImageTk, Image
 
 CONFIG_FILE_NAME = 'config.json'
 MAX_PICKING_ITEMS = 8
+COLOR_WHITE = (255, 255, 255)
+COLOR_GREEN = (14, 168, 75)
+COLOR_RED = (236, 31, 36)
 
 class Point:
     def __init__(self, x: int, y: int):
@@ -311,7 +314,7 @@ class PokaYokePicking():
 
     def SetAllAttributes(self):
         self.PickingItems = []
-        self.CurrentItem = 2
+        self.CurrentItem = None
         self.CurrentLowerZ = None
         self.CurrentUpperZ = None
         self.EditItem = None
@@ -659,14 +662,6 @@ class PokaYokePicking():
         editing, index = self.IsAnyItemBeingEdited()
         if editing:
             self.MouseX, self.MouseY = event.x, event.y
-            if self.RectValues[index].get():
-                pass # TODO print cursor
-                if self.EditItem.Rect is not None and self.EditItem.Rect.TopLeft is not None:
-                    pass # TODO print rectangle
-            if self.DepthValues[index].get():
-                pass # TODO print circle
-                if self.EditItem.Depth is not None and self.EditItem.Rect.TopLeft is not None:
-                    pass # TODO print line
 
     def CaptureMouseLeftClickEvent(self, event: EventType):
         editing, index = self.IsAnyItemBeingEdited()
@@ -787,47 +782,85 @@ class PokaYokePicking():
     def DrawImage(self, color_image: np.ndarray, depth_image: np.ndarray, hand_regions: list):
         blended_image = self.GetBlendedImage(color_image, depth_image)
 
+        for index, item in enumerate(self.PickingItems):
+            if self.EyeValues[index].get():
+                if item.Rect is not None:
+                    top_l = item.Rect.TopLeft
+                    bot_r = item.Rect.BottomRight
+                    if top_l is not None:
+                        if bot_r is not None:
+                            cv2.rectangle(blended_image, (top_l.X, top_l.Y), (bot_r.X, bot_r.Y), COLOR_WHITE, 1)
+                        else:
+                            cv2.drawMarker(blended_image, (top_l.X, top_l.Y), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
+            if self.BulbValues[index].get():
+                if item.Depth is not None:
+                    lower = item.Depth.LowerLevel
+                    upper = item.Depth.UpperLevel
+                    if lower is not None:
+                        if upper is not None:
+                            cv2.arrowedLine(blended_image, (lower.X, lower.Y), (upper.X, upper.Y), COLOR_WHITE, 1)
+                        else:
+                            cv2.circle(blended_image, (lower.X, lower.Y), 12, COLOR_WHITE, 1)
+
+        editing, index = self.IsAnyItemBeingEdited()
+        if editing:
+            if self.RectValues[index].get():
+                cv2.drawMarker(blended_image, (self.MouseX, self.MouseY), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
+                if self.EditItem.Rect is not None:
+                    top_l = self.EditItem.Rect.TopLeft
+                    if top_l is not None:
+                        cv2.drawMarker(blended_image, (top_l.X, top_l.Y), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
+                    bot_r = self.EditItem.Rect.BottomRight
+                    if bot_r is not None:
+                        cv2.drawMarker(blended_image, (bot_r.X, bot_r.Y), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
+                        cv2.rectangle(blended_image, (top_l.X, top_l.Y), (bot_r.X, bot_r.Y), COLOR_WHITE, 1)
+                    else:
+                        cv2.rectangle(blended_image, (top_l.X, top_l.Y), (self.MouseX, self.MouseY), COLOR_WHITE, 1)
+            if self.DepthValues[index].get():
+                cv2.circle(blended_image, (self.MouseX, self.MouseY), 12, COLOR_WHITE, 1)
+                if self.EditItem.Depth is not None:
+                    lower = self.EditItem.Depth.LowerLevel
+                    if lower is not None:
+                        cv2.circle(blended_image, (lower.X, lower.Y), 12, COLOR_WHITE, 1)
+                    upper = self.EditItem.Depth.UpperLevel
+                    if upper is not None:
+                        cv2.circle(blended_image, (upper.X, upper.Y), 12, COLOR_WHITE, 1)
+                        cv2.line(blended_image, (lower.X, lower.Y), (upper.X, upper.Y), COLOR_WHITE, 1)
+                    else:
+                        cv2.line(blended_image, (lower.X, lower.Y), (self.MouseX, self.MouseY), COLOR_WHITE, 1)
+
         if self.CurrentItem is not None:
-            hand_color = (255, 255, 255)
-            x_color = (255, 255, 255)
-            y_color = (255, 255, 255)
-            z_color = (255, 255, 255)
+            hand_color = COLOR_WHITE
+            x_color = COLOR_WHITE
+            y_color = COLOR_WHITE
+            z_color = COLOR_WHITE
             current_rect = self.PickingItems[self.CurrentItem].Rect
             current_point1 = (current_rect.TopLeft.X, current_rect.TopLeft.Y)
             current_point2 = (current_rect.BottomRight.X, current_rect.BottomRight.Y)
             cv2.rectangle(blended_image, current_point1, current_point2, hand_color, 2)
-
             if self.CurrentLowerZ is None and self.CurrentUpperZ is None:
                 current_depth = self.PickingItems[self.CurrentItem].Depth
                 self.CurrentLowerZ, self.CurrentUpperZ = self.CalculateDepthRange(depth_image, current_depth)
-
             for region in hand_regions:
                 xMin, yMin, xMax, yMax = self.CalculateRectFromRegion(blended_image, region)
-
                 if self.IsRectInsideItemRect(current_rect, xMin, yMin, xMax, yMax):
-                    hand_color = (14, 168, 75)
+                    hand_color = COLOR_GREEN
                 else:
-                    hand_color = (236, 31, 36)
-
+                    hand_color = COLOR_RED
                 x_point, y_point, z_point = self.CalculateTextPoints(xMin, yMin, xMax, yMax)
-
                 if self.IsRectInRangeX(current_rect, xMin, xMax):
-                    x_color = (14, 168, 75)
+                    x_color = COLOR_GREEN
                 else:
-                    x_color = (236, 31, 36)
-
+                    x_color = COLOR_RED
                 if self.IsRectInRangeY(current_rect, yMin, yMax):
-                    y_color = (14, 168, 75)
+                    y_color = COLOR_GREEN
                 else:
-                    y_color = (236, 31, 36)
-
+                    y_color = COLOR_RED
                 depth_value = self.CalculateDepthFromCoords(depth_image, xMin, yMin, xMax, yMax)
-                
                 if self.IsDepthInRangeZ(depth_value, self.CurrentLowerZ, self.CurrentUpperZ):
-                    z_color = (14, 168, 75)
+                    z_color = COLOR_GREEN
                 else:
-                    z_color = (236, 31, 36)
-
+                    z_color = COLOR_RED
                 blended_image_copy = blended_image.copy()
                 cv2.rectangle(blended_image_copy, (xMin, yMin), (xMax, yMax), z_color, cv2.FILLED)
                 blended_image = cv2.addWeighted(blended_image, 0.8, blended_image_copy, 0.2, 0)

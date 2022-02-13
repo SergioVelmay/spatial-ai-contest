@@ -49,11 +49,11 @@
         "Name": "CurrentItem3",
         "Rect": {
             "TopLeft": {
-                "X": 330,
+                "X": 328,
                 "Y": 7
             },
             "BottomRight": {
-                "X": 450,
+                "X": 451,
                 "Y": 179
             }
         },
