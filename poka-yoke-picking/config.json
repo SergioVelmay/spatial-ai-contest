@@ -3,22 +3,22 @@
         "Name": "111AAA111",
         "Rect": {
             "TopLeft": {
-                "X": 1,
-                "Y": 1
+                "X": 58,
+                "Y": 6
             },
             "BottomRight": {
-                "X": 1,
-                "Y": 1
+                "X": 183,
+                "Y": 180
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 11,
-                "Y": 11
+                "X": 126,
+                "Y": 147
             },
             "UpperLevel": {
-                "X": 11,
-                "Y": 11
+                "X": 188,
+                "Y": 20
             }
         }
     },
@@ -26,22 +26,22 @@
         "Name": "222BBB222",
         "Rect": {
             "TopLeft": {
-                "X": 2,
-                "Y": 2
+                "X": 193,
+                "Y": 6
             },
             "BottomRight": {
-                "X": 2,
-                "Y": 2
+                "X": 316,
+                "Y": 180
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 22,
-                "Y": 22
+                "X": 275,
+                "Y": 102
             },
             "UpperLevel": {
-                "X": 22,
-                "Y": 22
+                "X": 321,
+                "Y": 115
             }
         }
     },
@@ -63,8 +63,8 @@
                 "Y": 149
             },
             "UpperLevel": {
-                "X": 458,
-                "Y": 62
+                "X": 323,
+                "Y": 56
             }
         }
     },
@@ -72,73 +72,115 @@
         "Name": "444DDD444",
         "Rect": {
             "TopLeft": {
-                "X": 231,
-                "Y": 106
+                "X": 463,
+                "Y": 5
             },
             "BottomRight": {
-                "X": 355,
-                "Y": 262
+                "X": 586,
+                "Y": 179
             }
         },
-        "Depth": null
+        "Depth": {
+            "LowerLevel": {
+                "X": 525,
+                "Y": 124
+            },
+            "UpperLevel": {
+                "X": 457,
+                "Y": 21
+            }
+        }
     },
     {
         "Name": "555EEE555",
         "Rect": {
             "TopLeft": {
-                "X": 201,
-                "Y": 123
+                "X": 91,
+                "Y": 208
             },
             "BottomRight": {
-                "X": 354,
-                "Y": 255
+                "X": 202,
+                "Y": 352
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 316,
-                "Y": 263
+                "X": 167,
+                "Y": 303
             },
             "UpperLevel": {
-                "X": 318,
-                "Y": 120
+                "X": 206,
+                "Y": 217
             }
         }
     },
     {
         "Name": "666FFF666",
-        "Rect": null,
+        "Rect": {
+            "TopLeft": {
+                "X": 211,
+                "Y": 208
+            },
+            "BottomRight": {
+                "X": 317,
+                "Y": 349
+            }
+        },
         "Depth": {
             "LowerLevel": {
-                "X": 360,
-                "Y": 283
+                "X": 251,
+                "Y": 258
             },
             "UpperLevel": {
-                "X": 359,
-                "Y": 78
+                "X": 321,
+                "Y": 300
             }
         }
     },
     {
         "Name": "NewItem#7",
-        "Rect": null,
-        "Depth": null
+        "Rect": {
+            "TopLeft": {
+                "X": 327,
+                "Y": 207
+            },
+            "BottomRight": {
+                "X": 434,
+                "Y": 350
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 355,
+                "Y": 305
+            },
+            "UpperLevel": {
+                "X": 322,
+                "Y": 250
+            }
+        }
     },
     {
         "Name": "888",
         "Rect": {
             "TopLeft": {
                 "X": 443,
-                "Y": 207
+                "Y": 206
             },
-            "BottomRight": null
+            "BottomRight": {
+                "X": 554,
+                "Y": 349
+            }
         },
         "Depth": {
             "LowerLevel": {
                 "X": 468,
-                "Y": 314
+                "Y": 310
             },
-            "UpperLevel": null
+            "UpperLevel": {
+                "X": 438,
+                "Y": 217
+            }
         }
     }
 ]
