@@ -140,11 +140,9 @@ class Window():
         if answer:
             self.Root.destroy()
 
-class DepthCalculation:
+class Detection:
     def __init__(self, drawImage: classmethod):
         self.DrawImage = drawImage
-        self.ColorWeight = 0.5
-        self.DepthWeight = 0.5
         self.QueueNames = []
 
         self.PalmInputLength = 128
@@ -284,9 +282,6 @@ class DepthCalculation:
                 
                 inference = q_palm_out.get()
                 self.PalmPostprocess(inference)
-
-                for i, region in enumerate(self.regions):
-                    self.DrawPalmRectangle(frame_color, copiaColor, region)
             
             if latestPacket["depth"] is not None:
                 frame_depth = latestPacket["depth"].getFrame()
@@ -295,70 +290,15 @@ class DepthCalculation:
                 frame_depth = cv2.applyColorMap(frame_depth, cv2.COLORMAP_JET)
                 frame_depth = np.ascontiguousarray(frame_depth)
 
-                for i, region in enumerate(self.regions):
-                    self.AverageDepth, self.CentroidX, self.CentroidY = self.CalcSpatials(self.X1, self.Y1, self.X2, self.Y2, frame_depth)
-                    xMin, yMin, xMax, yMax = self.GetRoiByPercent(0.5, self.X1, self.Y1, self.X2, self.Y2)
-                    cv2.rectangle(frame_depth, (xMin, yMin), (xMax, yMax), (255, 255, 255), 2)
-                    self.DrawPalmText(frame_depth, self.AverageDepth, self.CentroidX-10, self.CentroidY)
-
             if frame_color is not None and frame_depth is not None:
-                frame_color = cv2.cvtColor(frame_color, cv2.COLOR_BGR2RGB)
-                if len(frame_depth.shape) < 3:
-                    frame_depth = cv2.cvtColor(frame_depth, cv2.COLOR_GRAY2RGB)
-                else:
-                    frame_depth = cv2.cvtColor(frame_depth, cv2.COLOR_BGR2RGB)
-                blended = cv2.addWeighted(frame_color, self.ColorWeight, frame_depth, self.DepthWeight, 0)
-
-                self.DrawImage(blended)
-
+                self.DrawImage(frame_color, frame_depth, self.regions)
                 frame_color = None
                 frame_depth = None
-
-    def DrawPalmRectangle(self, frame, copy, region):
-        x1_float = region.pd_box[0]
-        y1_float = region.pd_box[1]
-        x2_float = x1_float + region.pd_box[2]
-        y2_float = y1_float + region.pd_box[3]
-        new_h, new_w = copy.shape[:2]
-        self.X1 = int(x1_float*new_w) - self.pad_w
-        self.Y1 = int(y1_float*new_h) - self.pad_h
-        self.X2 = int(x2_float*new_w) - self.pad_w
-        self.Y2 = int(y2_float*new_h) - self.pad_h
-        cv2.rectangle(frame, (self.X1, self.Y1), (self.X2, self.Y2), (255, 255, 255), 2)
-    
-    def DrawPalmText(self, frame, depth, point1, point2):
-        cv2.putText(frame, str(depth), (point1, point2), cv2.FONT_HERSHEY_DUPLEX, 0.4, (255, 255, 255))
-    
-    def CalcSpatials(self, xMin, yMin, xMax, yMax, depth):
-        xMin, yMin, xMax, yMax = self.GetRoiByPercent(0.5, xMin, yMin, xMax, yMax)
-
-        depth_roi = depth[yMin:yMax, xMin:xMax]
-
-        float_mean = np.mean(depth_roi[True])
-        
-        if np.isnan(float_mean):
-            average_depth = None
-        else:
-            average_depth = int(float_mean)
-
-        centroid_x = int((xMax - xMin) / 2) + xMin
-        centroid_y = int((yMax - yMin) / 2) + yMin
-
-        return (average_depth, centroid_x, centroid_y)
-
-    def GetRoiByPercent(self, percent, xMin, yMin, xMax, yMax):
-        delta_x = int((xMax - xMin) * percent / 2)
-        delta_y = int((yMax - yMin) * percent / 2)
-        xMin += delta_x
-        yMin += delta_y
-        xMax -= delta_x
-        yMax -= delta_y
-        return xMin, yMin, xMax, yMax
 
 class PokaYokePicking():
     def __init__(self, json: list):
         self.Window = Window()
-        self.Detection = DepthCalculation(self.DrawImage)
+        self.Detection = Detection(self.DrawImage)
 
         self.FONT_BOLD = ('arial', 12, 'bold')
         self.FONT_NORMAL = ('arial', 12, 'normal')
@@ -371,6 +311,9 @@ class PokaYokePicking():
 
     def SetAllAttributes(self):
         self.PickingItems = []
+        self.CurrentItem = 2
+        self.CurrentLowerZ = None
+        self.CurrentUpperZ = None
         self.EditItem = None
         self.MouseX = None
         self.MouseY = None
@@ -749,8 +692,151 @@ class PokaYokePicking():
             if self.DepthValues[index].get():
                 self.EditItem.Depth = None
 
-    def DrawImage(self, image):
-        pil_image = Image.fromarray(image)
+    def GetBlendedImage(self, color_image: np.ndarray, depth_image: np.ndarray):
+        if len(color_image.shape) < 3:
+            frame_color = cv2.cvtColor(color_image, cv2.COLOR_GRAY2RGB)
+        else:
+            frame_color = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
+        if len(depth_image.shape) < 3:
+            frame_depth = cv2.cvtColor(depth_image, cv2.COLOR_GRAY2RGB)
+        else:
+            frame_depth = cv2.cvtColor(depth_image, cv2.COLOR_BGR2RGB)
+        blended_image = cv2.addWeighted(frame_color, 0.9, frame_depth, 0.1, 0)
+        return blended_image
+
+    def GetRectFromRegion(self, frame, region):
+        x1_float = region.pd_box[0]
+        y1_float = region.pd_box[1]
+        x2_float = x1_float + region.pd_box[2]
+        y2_float = y1_float + region.pd_box[3]
+        h, w = frame.shape[:2]
+        frame_size = max(h, w)
+        pad_h = int((frame_size - h)/2)
+        pad_w = int((frame_size - w)/2)
+        x1 = int(x1_float*frame_size) - pad_w
+        y1 = int(y1_float*frame_size) - pad_h
+        x2 = int(x2_float*frame_size) - pad_w
+        y2 = int(y2_float*frame_size) - pad_h
+        return x1, y1, x2, y2
+
+    def GetRoiByPercent(self, percent, xMin, yMin, xMax, yMax):
+        delta_x = int((xMax - xMin) * percent / 2)
+        delta_y = int((yMax - yMin) * percent / 2)
+        xMin += delta_x
+        yMin += delta_y
+        xMax -= delta_x
+        yMax -= delta_y
+        return xMin, yMin, xMax, yMax
+
+    def GetRoiByRadius(self, radius:int, point: Point):
+        x1 = point.X - radius
+        y1 = point.Y - radius
+        x2 = point.X + radius
+        y2 = point.Y + radius
+        return x1, y1, x2, y2
+
+    def CalculateRectFromRegion(self, color_image, region):
+        x1, y1, x2, y2 = self.GetRectFromRegion(color_image, region)
+        xMin, yMin, xMax, yMax = self.GetRoiByPercent(0.5, x1, y1, x2, y2)
+        return xMin, yMin, xMax, yMax
+    
+    def CalculateDepthFromCoords(self, depth_image, xMin, yMin, xMax, yMax):
+        depth_roi = depth_image[yMin:yMax, xMin:xMax]
+        float_mean = np.mean(depth_roi[True])
+        if np.isnan(float_mean):
+            average_depth = None
+        else:
+            average_depth = int(float_mean)
+        return average_depth
+
+    def CalculateTextPoints(self, xMin: int, yMin: int, xMax: int, yMax: int):
+        centroid_x = int((xMax - xMin) / 2) + xMin
+        centroid_y = int((yMax - yMin) / 2) + yMin
+        point_x = (centroid_x - 13, centroid_y + 4)
+        point_y = (centroid_x - 4, centroid_y + 4)
+        point_z = (centroid_x + 5, centroid_y + 4)
+        return point_x, point_y, point_z
+
+    def CalculateDepthRange(self, depth_image: np.ndarray, current_depth: Depth):
+        min_x1, min_y1, min_x2, min_y2 = self.GetRoiByRadius(10, current_depth.LowerLevel)
+        max_x1, max_y1, max_x2, max_y2 = self.GetRoiByRadius(10, current_depth.UpperLevel)
+        min_depth = self.CalculateDepthFromCoords(depth_image, min_x1, min_y1, min_x2, min_y2)
+        max_depth = self.CalculateDepthFromCoords(depth_image, max_x1, max_y1, max_x2, max_y2)
+        return min_depth, max_depth
+
+    def IsRectInRangeX(self, rect: Rect, x1: int, x2: int):
+        left_value = rect.TopLeft.X < x1
+        right_value = rect.BottomRight.X > x2
+        return left_value and right_value
+
+    def IsRectInRangeY(self, rect: Rect, y1: int, y2: int):
+        top_value = rect.TopLeft.Y < y1
+        bot_value = rect.BottomRight.Y > y2
+        return top_value and bot_value
+    
+    def IsRectInsideItemRect(self, rect: Rect, x1: int, y1: int, x2: int, y2: int):
+        top_left_value = rect.TopLeft.X < x1 and rect.TopLeft.Y < y1
+        bot_right_value = rect.BottomRight.X > x2 and rect.BottomRight.Y > y2
+        return top_left_value and bot_right_value
+
+    def IsDepthInRangeZ(self, depth: int, lower_z: int, upper_z: int):
+        lower_value = lower_z > depth
+        upper_value = upper_z < depth
+        return lower_value and upper_value
+
+    def DrawImage(self, color_image: np.ndarray, depth_image: np.ndarray, hand_regions: list):
+        blended_image = self.GetBlendedImage(color_image, depth_image)
+
+        if self.CurrentItem is not None:
+            hand_color = (255, 255, 255)
+            x_color = (255, 255, 255)
+            y_color = (255, 255, 255)
+            z_color = (255, 255, 255)
+            current_rect = self.PickingItems[self.CurrentItem].Rect
+            current_point1 = (current_rect.TopLeft.X, current_rect.TopLeft.Y)
+            current_point2 = (current_rect.BottomRight.X, current_rect.BottomRight.Y)
+            cv2.rectangle(blended_image, current_point1, current_point2, hand_color, 2)
+
+            if self.CurrentLowerZ is None and self.CurrentUpperZ is None:
+                current_depth = self.PickingItems[self.CurrentItem].Depth
+                self.CurrentLowerZ, self.CurrentUpperZ = self.CalculateDepthRange(depth_image, current_depth)
+
+            for region in hand_regions:
+                xMin, yMin, xMax, yMax = self.CalculateRectFromRegion(blended_image, region)
+
+                if self.IsRectInsideItemRect(current_rect, xMin, yMin, xMax, yMax):
+                    hand_color = (14, 168, 75)
+                else:
+                    hand_color = (236, 31, 36)
+
+                x_point, y_point, z_point = self.CalculateTextPoints(xMin, yMin, xMax, yMax)
+
+                if self.IsRectInRangeX(current_rect, xMin, xMax):
+                    x_color = (14, 168, 75)
+                else:
+                    x_color = (236, 31, 36)
+
+                if self.IsRectInRangeY(current_rect, yMin, yMax):
+                    y_color = (14, 168, 75)
+                else:
+                    y_color = (236, 31, 36)
+
+                depth_value = self.CalculateDepthFromCoords(depth_image, xMin, yMin, xMax, yMax)
+                
+                if self.IsDepthInRangeZ(depth_value, self.CurrentLowerZ, self.CurrentUpperZ):
+                    z_color = (14, 168, 75)
+                else:
+                    z_color = (236, 31, 36)
+
+                blended_image_copy = blended_image.copy()
+                cv2.rectangle(blended_image_copy, (xMin, yMin), (xMax, yMax), z_color, cv2.FILLED)
+                blended_image = cv2.addWeighted(blended_image, 0.8, blended_image_copy, 0.2, 0)
+                cv2.rectangle(blended_image, (xMin, yMin), (xMax, yMax), hand_color, 2)
+                cv2.putText(blended_image, 'X', x_point, cv2.FONT_HERSHEY_DUPLEX, 0.4, x_color, 1)
+                cv2.putText(blended_image, 'Y', y_point, cv2.FONT_HERSHEY_DUPLEX, 0.4, y_color, 1)
+                cv2.putText(blended_image, 'Z', z_point, cv2.FONT_HERSHEY_DUPLEX, 0.4, z_color, 1)
+
+        pil_image = Image.fromarray(blended_image)
         image_tk = ImageTk.PhotoImage(image=pil_image)
         self.Window.VideoFrame.image_tk = image_tk
         self.Window.VideoFrame['image'] = image_tk
