@@ -124,14 +124,14 @@ class Window():
         self.MainFrame = Frame(self.Root, width=1280, height=720)
         self.MainFrame.pack(expand=True)
         
-        self.SettingsFrame = Frame(self.MainFrame, bg='yellow', width=440, height=680)
+        self.SettingsFrame = Frame(self.MainFrame, width=440, height=680)
         self.SettingsFrame.place(x=780, y=20)
 
-        self.StreamingLabel = Frame(self.MainFrame, bg='cyan', width=640, height=520)
-        self.StreamingLabel.place(x=70, y=20)
+        self.StreamingFrame = Frame(self.MainFrame, width=640, height=520)
+        self.StreamingFrame.place(x=70, y=20)
 
-        self.VideoFrame = Label(self.StreamingLabel, borderwidth=0, bg='white')
-        self.VideoFrame.place( w=640, h=360, x=0, y=80)
+        self.VideoLabel = Label(self.StreamingFrame, borderwidth=0, bg='white')
+        self.VideoLabel.place( w=640, h=360, x=0, y=80)
 
         self.Root.protocol("WM_DELETE_WINDOW", self.OnClosingEvent)
 
@@ -311,6 +311,7 @@ class PokaYokePicking():
         self.SetAllPickingItems(json)
         self.BindAllMouseEvents()
         self.SetAddNewItemButton()
+        self.SetBlendScaleSection()
 
     def SetAllAttributes(self):
         self.PickingItems = []
@@ -321,7 +322,7 @@ class PokaYokePicking():
         self.MouseX = None
         self.MouseY = None
         # widgets lists
-        self.OrderLabels = []
+        self.OrderButtons = []
         self.NameLabels = []
         self.EyeButtons = []
         self.BulbButtons = []
@@ -336,6 +337,7 @@ class PokaYokePicking():
         self.CancelButtons = []
         self.HiddenLabels = []
         # variables lists
+        self.OrderValues = []
         self.EyeValues = []
         self.BulbValues = []
         self.EditValues = []
@@ -360,6 +362,7 @@ class PokaYokePicking():
         return len(self.PickingItems)
 
     def SetVariables(self):
+        self.OrderValues.append(BooleanVar(value=False))
         self.EyeValues.append(BooleanVar(value=False))
         self.BulbValues.append(BooleanVar(value=False))
         self.EditValues.append(BooleanVar(value=False))
@@ -368,6 +371,8 @@ class PokaYokePicking():
         self.DepthValues.append(BooleanVar(value=False))
 
     def SetAllIconImages(self):
+        self.OrderOnIcon = PhotoImage(file='./assets/icon-check-on.png')
+        self.OrderOffIcon = PhotoImage(file='./assets/icon-check-off.png')
         self.EyeOnIcon = PhotoImage(file='./assets/icon-eye-on.png')
         self.EyeOffIcon = PhotoImage(file='./assets/icon-eye-off.png')
         self.BulbOnIcon = PhotoImage(file='./assets/icon-bulb-on.png')
@@ -383,6 +388,7 @@ class PokaYokePicking():
         self.AddIcon = PhotoImage(file='./assets/icon-add.png')
 
     def AssignCommands(self, index: int):
+        self.OrderButtons[index]['command'] = lambda: self.OrderButtonClick(index)
         self.EditButtons[index]['command'] = lambda: self.EditButtonClick(index)
         self.DeleteButtons[index]['command'] = lambda: self.DeleteButtonClick(index)
         self.UpButtons[index]['command'] = lambda: self.MoveUpButtonClick(index)
@@ -394,6 +400,7 @@ class PokaYokePicking():
         self.NameEntries[index].bind('<Button-1>', lambda _: self.EditNameEntryClick(index))
     
     def AssignVariables(self, index: int):
+        self.OrderButtons[index]['variable'] = self.OrderValues[index]
         self.EyeButtons[index]['variable'] = self.EyeValues[index]
         self.BulbButtons[index]['variable'] = self.BulbValues[index]
         self.EditButtons[index]['variable'] = self.EditValues[index]
@@ -402,22 +409,17 @@ class PokaYokePicking():
         self.DepthButtons[index]['variable'] = self.DepthValues[index]
 
     def SetWidgets(self, index: int):
-        self.OrderLabels.append(Label(self.Window.SettingsFrame, font=self.FONT_BOLD, relief=SOLID))
+        self.OrderButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.OrderOffIcon, selectimage=self.OrderOnIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.NameLabels.append(Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=self.FONT_BOLD, relief=SOLID))
-        self.EyeButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EyeOffIcon, selectimage=self.EyeOnIcon,
-            onvalue=True, offvalue=False, indicatoron=False))
-        self.BulbButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.BulbOffIcon, selectimage=self.BulbOnIcon,
-            onvalue=True, offvalue=False, indicatoron=False))
-        self.EditButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EditIcon,
-            onvalue=True, offvalue=False, indicatoron=False))
+        self.EyeButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EyeOffIcon, selectimage=self.EyeOnIcon, onvalue=True, offvalue=False, indicatoron=False))
+        self.BulbButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.BulbOffIcon, selectimage=self.BulbOnIcon, onvalue=True, offvalue=False, indicatoron=False))
+        self.EditButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EditIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.DeleteButtons.append(Button(self.Window.SettingsFrame, image=self.DeleteIcon))
         self.UpButtons.append(Button(self.Window.SettingsFrame, image=self.UpIcon))
         self.DownButtons.append(Button(self.Window.SettingsFrame, image=self.DownIcon))
         self.NameEntries.append(Entry(self.Window.SettingsFrame, font=self.FONT_NORMAL, justify=CENTER))
-        self.RectButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.RectIcon,
-            onvalue=True, offvalue=False, indicatoron=False))
-        self.DepthButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.DepthIcon,
-            onvalue=True, offvalue=False, indicatoron=False))
+        self.RectButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.RectIcon, onvalue=True, offvalue=False, indicatoron=False))
+        self.DepthButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.DepthIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.SaveButtons.append(Button(self.Window.SettingsFrame, image=self.SaveIcon))
         self.CancelButtons.append(Button(self.Window.SettingsFrame, image=self.CancelIcon))
         self.HiddenLabels.append(Label(self.Window.SettingsFrame))
@@ -425,7 +427,6 @@ class PokaYokePicking():
         self.AssignCommands(index)
     
     def SetOrderAndArrows(self, index: int, length: int):
-        self.OrderLabels[index]['text'] = str(index + 1)
         EnableWidget(self.UpButtons[index])
         EnableWidget(self.DownButtons[index])
         if index == 0:
@@ -437,7 +438,7 @@ class PokaYokePicking():
         self.HiddenLabels[index].place(w=312, h=32, x=40, y=index*80+40)
 
     def PlaceWidgets(self, index: int):
-        self.OrderLabels[index].place(w=32, h=32, x=0, y=index*80)
+        self.OrderButtons[index].place(w=32, h=32, x=0, y=index*80)
         self.NameLabels[index].place(w=150, h=32, x=40, y=index*80)
         self.EyeButtons[index].place(w=32, h=32, x=200, y=index*80)
         self.BulbButtons[index].place(w=32, h=32, x=240, y=index*80)
@@ -453,9 +454,9 @@ class PokaYokePicking():
         self.PlaceHiddenLabel(index)
 
     def BindAllMouseEvents(self):
-        self.Window.VideoFrame.bind('<Motion>', self.CaptureMouseMotionEvent, add="+")
-        self.Window.VideoFrame.bind('<Button-1>', self.CaptureMouseLeftClickEvent, add="+")
-        self.Window.VideoFrame.bind('<Button-3>', self.CaptureMouseRightClickEvent, add="+")
+        self.Window.VideoLabel.bind('<Motion>', self.CaptureMouseMotionEvent, add="+")
+        self.Window.VideoLabel.bind('<Button-1>', self.CaptureMouseLeftClickEvent, add="+")
+        self.Window.VideoLabel.bind('<Button-3>', self.CaptureMouseRightClickEvent, add="+")
 
     def SetAddNewItemButton(self):
         self.AddButton = Button(self.Window.SettingsFrame, text='Add new item', font=self.FONT_NORMAL,
@@ -481,8 +482,14 @@ class PokaYokePicking():
         self.PlaceAddNewItemButton()
         self.SaveConfigurationFile()
 
+    def SetBlendScaleSection(self):
+        Label(self.Window.StreamingFrame, font=self.FONT_NORMAL, text='Color').place(w=50, h=32, x=0, y=440)
+        Label(self.Window.StreamingFrame, font=self.FONT_NORMAL, text='Depth').place(w=50, h=32, x=590, y=440)
+        self.BlendValue = IntVar(value=50)
+        Scale(self.Window.StreamingFrame, from_=0, to=100, orient=HORIZONTAL, showvalue=0, variable=self.BlendValue).place(w=540, h=22, x=50, y=446)
+
     def SwapWidgets(self, index: int, new_index: int):
-        self.OrderLabels[index], self.OrderLabels[new_index] = self.OrderLabels[new_index], self.OrderLabels[index]
+        self.OrderButtons[index], self.OrderButtons[new_index] = self.OrderButtons[new_index], self.OrderButtons[index]
         self.NameLabels[index], self.NameLabels[new_index] = self.NameLabels[new_index], self.NameLabels[index]
         self.EyeButtons[index], self.EyeButtons[new_index] = self.EyeButtons[new_index], self.EyeButtons[index]
         self.BulbButtons[index], self.BulbButtons[new_index] = self.BulbButtons[new_index], self.BulbButtons[index]
@@ -506,7 +513,7 @@ class PokaYokePicking():
         self.DepthValues[index], self.DepthValues[new_index] = self.DepthValues[new_index], self.DepthValues[index]
 
     def ForgetWidgets(self, index: int):
-        self.OrderLabels[index].place_forget()
+        self.OrderButtons[index].place_forget()
         self.NameLabels[index].place_forget()
         self.EyeButtons[index].place_forget()
         self.BulbButtons[index].place_forget()
@@ -523,7 +530,7 @@ class PokaYokePicking():
 
     def RemoveWidgets(self, index: int):
         self.ForgetWidgets(index)
-        del self.OrderLabels[index]
+        del self.OrderButtons[index]
         del self.NameLabels[index]
         del self.EyeButtons[index]
         del self.BulbButtons[index]
@@ -539,6 +546,7 @@ class PokaYokePicking():
         del self.HiddenLabels[index]
 
     def RemoveVariables(self, index: int):
+        del self.OrderValues[index]
         del self.EyeValues[index]
         del self.BulbValues[index]
         del self.EditValues[index]
@@ -569,6 +577,15 @@ class PokaYokePicking():
         self.RectValues[index].set(False)
         self.DepthValues[index].set(False)
         self.PlaceHiddenLabel(index)
+
+    def OrderButtonClick(self, index: int):
+        if self.OrderValues[index].get():
+            self.CurrentItem = index
+            for value_index, value in enumerate(self.OrderValues):
+                if value_index != index:
+                    value.set(False)
+        else:
+            self.CurrentItem = None
 
     def EditButtonClick(self, index: int):
         if self.EditValues[index].get():
@@ -688,6 +705,8 @@ class PokaYokePicking():
                 self.EditItem.Depth = None
 
     def GetBlendedImage(self, color_image: np.ndarray, depth_image: np.ndarray):
+        blend_depth = self.BlendValue.get() / 100
+        blend_color = 1 - blend_depth
         if len(color_image.shape) < 3:
             frame_color = cv2.cvtColor(color_image, cv2.COLOR_GRAY2RGB)
         else:
@@ -696,7 +715,7 @@ class PokaYokePicking():
             frame_depth = cv2.cvtColor(depth_image, cv2.COLOR_GRAY2RGB)
         else:
             frame_depth = cv2.cvtColor(depth_image, cv2.COLOR_BGR2RGB)
-        blended_image = cv2.addWeighted(frame_color, 0.9, frame_depth, 0.1, 0)
+        blended_image = cv2.addWeighted(frame_color, blend_color, frame_depth, blend_depth, 0)
         return blended_image
 
     def GetRectFromRegion(self, frame, region):
@@ -871,8 +890,8 @@ class PokaYokePicking():
 
         pil_image = Image.fromarray(blended_image)
         image_tk = ImageTk.PhotoImage(image=pil_image)
-        self.Window.VideoFrame.image_tk = image_tk
-        self.Window.VideoFrame['image'] = image_tk
+        self.Window.VideoLabel.image_tk = image_tk
+        self.Window.VideoLabel['image'] = image_tk
 
 def Main():
     if os.path.isfile(CONFIG_FILE_NAME):
