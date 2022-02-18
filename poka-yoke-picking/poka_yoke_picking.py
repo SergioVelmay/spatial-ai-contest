@@ -483,10 +483,10 @@ class PokaYokePicking():
         self.SaveConfigurationFile()
 
     def SetBlendScaleSection(self):
-        Label(self.Window.StreamingFrame, font=self.FONT_NORMAL, text='Color').place(w=50, h=32, x=0, y=440)
+        Label(self.Window.StreamingFrame, font=self.FONT_NORMAL, text='Color').place(w=45, h=32, x=0, y=440)
         Label(self.Window.StreamingFrame, font=self.FONT_NORMAL, text='Depth').place(w=50, h=32, x=590, y=440)
         self.BlendValue = IntVar(value=50)
-        Scale(self.Window.StreamingFrame, from_=0, to=100, orient=HORIZONTAL, showvalue=0, variable=self.BlendValue).place(w=540, h=22, x=50, y=446)
+        Scale(self.Window.StreamingFrame, from_=0, to=100, orient=HORIZONTAL, showvalue=0, variable=self.BlendValue).place(w=545, h=22, x=45, y=446)
 
     def SwapWidgets(self, index: int, new_index: int):
         self.OrderButtons[index], self.OrderButtons[new_index] = self.OrderButtons[new_index], self.OrderButtons[index]
@@ -581,8 +581,8 @@ class PokaYokePicking():
     def OrderButtonClick(self, index: int):
         if self.OrderValues[index].get():
             self.CurrentItem = index
-            for value_index, value in enumerate(self.OrderValues):
-                if value_index != index:
+            for i, value in enumerate(self.OrderValues):
+                if i != index:
                     value.set(False)
         else:
             self.CurrentItem = None
@@ -592,6 +592,9 @@ class PokaYokePicking():
             self.HiddenLabels[index].place_forget()
             self.CopyPickingItem(index)
             self.NameValues[index].set(self.EditItem.Name)
+            for i in range(0, len(self.PickingItems)):
+                if i != index:
+                    self.RestoreEditOptions(i)
         else:
             self.RestoreEditOptions(index)
 
@@ -628,6 +631,8 @@ class PokaYokePicking():
             self.RemoveVariables(index)
             self.PlaceAffectedItems(index)
             self.PlaceAddNewItemButton()
+            if self.OrderValues[index]:
+                self.OrderButtonClick(index)
 
     def SaveButtonClick(self, index: int):
         answer = messagebox.askyesno(title='Save Confirmation', message='Do you want to save the settings?')
@@ -676,7 +681,7 @@ class PokaYokePicking():
             return editing_item, None
 
     def CaptureMouseMotionEvent(self, event: EventType):
-        editing, index = self.IsAnyItemBeingEdited()
+        editing, _ = self.IsAnyItemBeingEdited()
         if editing:
             self.MouseX, self.MouseY = event.x, event.y
 
