@@ -120,6 +120,36 @@ class PokaYokePicking():
         self.RectButtons[index]['variable'] = self.RectValues[index]
         self.DepthButtons[index]['variable'] = self.DepthValues[index]
 
+    def ApplyBackgrounds(self, index: int):
+        warning_count = 0
+        warning_name = 0
+        if self.PickingItems[index].Name.startswith(DEFAULT_NAME):
+            self.NameEntries[index]['bg'] = COLOR_YELLOW
+            warning_count = warning_count + 1
+            warning_name = 1
+        else:
+            self.NameEntries[index]['bg'] = COLOR_DEFAULT
+        if self.PickingItems[index].Rect is None or self.PickingItems[index].Rect.BottomRight is None:
+            self.RectButtons[index]['bg'] = COLOR_YELLOW
+            warning_count = warning_count + 1
+        else:
+            self.RectButtons[index]['bg'] = COLOR_DEFAULT
+        if self.PickingItems[index].Depth is None or self.PickingItems[index].Depth.UpperLevel is None:
+            self.DepthButtons[index]['bg'] = COLOR_YELLOW
+            warning_count = warning_count + 1
+        else:
+            self.DepthButtons[index]['bg'] = COLOR_DEFAULT
+        if warning_count > 0:
+            self.EditButtons[index]['bg'] = COLOR_YELLOW
+            if warning_count - warning_name > 0:
+                DisableWidget(self.OrderButtons[index])
+                if self.OrderValues[index].get():
+                    self.OrderValues[index].set(False)
+                    self.OrderButtonClick(index)
+        else:
+            self.EditButtons[index]['bg'] = COLOR_DEFAULT
+            EnableWidget(self.OrderButtons[index])
+
     def SetWidgets(self, index: int):
         self.OrderButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.OrderOffIcon, selectimage=self.OrderOnIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.NameLabels.append(Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=self.FONT_BOLD, relief=SOLID))
@@ -137,6 +167,7 @@ class PokaYokePicking():
         self.HiddenLabels.append(Label(self.Window.SettingsFrame))
         self.AssignVariables(index)
         self.AssignCommands(index)
+        self.ApplyBackgrounds(index)
     
     def SetOrderAndArrows(self, index: int, length: int):
         EnableWidget(self.UpButtons[index])
@@ -166,9 +197,9 @@ class PokaYokePicking():
         self.PlaceHiddenLabel(index)
 
     def BindAllMouseEvents(self):
-        self.Window.VideoLabel.bind('<Motion>', self.CaptureMouseMotionEvent, add="+")
-        self.Window.VideoLabel.bind('<Button-1>', self.CaptureMouseLeftClickEvent, add="+")
-        self.Window.VideoLabel.bind('<Button-3>', self.CaptureMouseRightClickEvent, add="+")
+        self.Window.VideoLabel.bind('<Motion>', self.CaptureMouseMotionEvent, add='+')
+        self.Window.VideoLabel.bind('<Button-1>', self.CaptureMouseLeftClickEvent, add='+')
+        self.Window.VideoLabel.bind('<Button-3>', self.CaptureMouseRightClickEvent, add='+')
 
     def SetAddNewItemButton(self):
         self.AddButton = Button(self.Window.SettingsFrame, text='Add new item', font=self.FONT_NORMAL,
@@ -184,7 +215,7 @@ class PokaYokePicking():
 
     def AddNewItemButtonClick(self):
         index = self.GetListLength()
-        pick_name = "NewItem#" + str(index + 1)
+        pick_name = DEFAULT_NAME + str(index + 1)
         pick_item = PickingItem(pick_name)
         self.PickingItems.append(pick_item)
         length = self.GetListLength()
@@ -267,7 +298,7 @@ class PokaYokePicking():
         del self.DepthValues[index]
     
     def SaveConfigurationFile(self):
-        with open(CONFIG_FILE_NAME, "w") as json_file:
+        with open(CONFIG_FILE_NAME, 'w') as json_file:
             json.dump(self.PickingItems, json_file, cls=CustomEncoder, indent=4)
             json_file.close()
 
@@ -353,6 +384,7 @@ class PokaYokePicking():
             self.PickingItems[index] = self.EditItem
             self.NameLabels[index]['text'] = self.PickingItems[index].Name
             self.SaveConfigurationFile()
+            self.ApplyBackgrounds(index)
             self.RestoreEditOptions(index)
 
     def CancelButtonClick(self, index: int):

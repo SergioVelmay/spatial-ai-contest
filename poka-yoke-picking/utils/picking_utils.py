@@ -112,12 +112,12 @@ class Window():
         self.VideoLabel = Label(self.StreamingFrame, borderwidth=0, bg='white')
         self.VideoLabel.place( w=640, h=360, x=0, y=80)
 
-        self.Root.protocol("WM_DELETE_WINDOW", self.OnClosingEvent)
+        self.Root.protocol('WM_DELETE_WINDOW', self.OnClosingEvent)
 
     def StartMainLoop(self):
         self.Root.mainloop()
     
     def OnClosingEvent(self):
-        answer = messagebox.askokcancel("Quit", "Do you want to exit the program?")
+        answer = messagebox.askokcancel('Quit', 'Do you want to exit the program?')
         if answer:
             self.Root.destroy()

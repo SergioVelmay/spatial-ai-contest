@@ -6,6 +6,9 @@ MAX_PICKING_ITEMS = 8
 COLOR_WHITE = (255, 255, 255)
 COLOR_GREEN = (14, 168, 75)
 COLOR_RED = (236, 31, 36)
+COLOR_YELLOW = '#FFE61A' # (100, 90, 10)
+COLOR_DEFAULT = '#F0F0F0' # 'SystemWindow'
+DEFAULT_NAME = 'NewItem#'
 
 def DisableWidget(widget: Widget):
     widget['state'] = DISABLED
