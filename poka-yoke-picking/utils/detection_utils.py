@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import threading
 import depthai as dai
-import mediapipe_utils as mpu
+import utils.mediapipe_utils as mpu
 from pathlib import Path
 
 class Detection:

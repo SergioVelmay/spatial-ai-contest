@@ -1,5 +1,5 @@
-from picking_utils import *
-from mediapipe_utils import *
+from utils.picking_utils import *
+from utils.mediapipe_utils import *
 
 CONFIG_FILE_NAME = 'config.json'
 MAX_PICKING_ITEMS = 8
