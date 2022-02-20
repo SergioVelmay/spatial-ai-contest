@@ -15,9 +15,6 @@ class PokaYokePicking():
         self.Window = Window()
         self.Detection = Detection(self.DrawImage)
 
-        self.FONT_BOLD = ('arial', 12, 'bold')
-        self.FONT_NORMAL = ('arial', 12, 'normal')
-
         self.SetAllAttributes()
         self.SetAllIconImages()
         self.SetAllPickingItems(json)
@@ -36,6 +33,7 @@ class PokaYokePicking():
         # widgets lists
         self.OrderButtons = []
         self.NameLabels = []
+        self.AmountLabels = []
         self.EyeButtons = []
         self.BulbButtons = []
         self.EditButtons = []
@@ -43,6 +41,7 @@ class PokaYokePicking():
         self.UpButtons = []
         self.DownButtons = []
         self.NameEntries = []
+        self.AmountEntries = []
         self.RectButtons = []
         self.DepthButtons = []
         self.SaveButtons = []
@@ -54,6 +53,7 @@ class PokaYokePicking():
         self.BulbValues = []
         self.EditValues = []
         self.NameValues = []
+        self.AmountValues = []
         self.RectValues = []
         self.DepthValues = []
 
@@ -79,6 +79,7 @@ class PokaYokePicking():
         self.BulbValues.append(BooleanVar(value=False))
         self.EditValues.append(BooleanVar(value=False))
         self.NameValues.append(StringVar(value=''))
+        self.AmountValues.append(StringVar(value=''))
         self.RectValues.append(BooleanVar(value=False))
         self.DepthValues.append(BooleanVar(value=False))
 
@@ -110,6 +111,7 @@ class PokaYokePicking():
         self.SaveButtons[index]['command'] = lambda: self.SaveButtonClick(index)
         self.CancelButtons[index]['command'] = lambda: self.CancelButtonClick(index)
         self.NameEntries[index].bind('<Button-1>', lambda _: self.EditNameEntryClick(index))
+        self.AmountEntries[index].bind('<Button-1>', lambda _: self.EditAmountEntryClick(index))
     
     def AssignVariables(self, index: int):
         self.OrderButtons[index]['variable'] = self.OrderValues[index]
@@ -117,49 +119,79 @@ class PokaYokePicking():
         self.BulbButtons[index]['variable'] = self.BulbValues[index]
         self.EditButtons[index]['variable'] = self.EditValues[index]
         self.NameEntries[index]['textvariable'] = self.NameValues[index]
+        self.AmountEntries[index]['textvariable'] = self.AmountValues[index]
         self.RectButtons[index]['variable'] = self.RectValues[index]
         self.DepthButtons[index]['variable'] = self.DepthValues[index]
 
     def ApplyBackgrounds(self, index: int):
         warning_count = 0
         warning_name = 0
-        if self.PickingItems[index].Name.startswith(DEFAULT_NAME):
-            self.NameEntries[index]['bg'] = COLOR_YELLOW
+        if self.ApplyNameBackground(index):
             warning_count = warning_count + 1
             warning_name = 1
-        else:
-            self.NameEntries[index]['bg'] = COLOR_DEFAULT
-        if self.PickingItems[index].Rect is None or self.PickingItems[index].Rect.BottomRight is None:
-            self.RectButtons[index]['bg'] = COLOR_YELLOW
+        if self.ApplyAmountBackground(index):
             warning_count = warning_count + 1
-        else:
-            self.RectButtons[index]['bg'] = COLOR_DEFAULT
-        if self.PickingItems[index].Depth is None or self.PickingItems[index].Depth.UpperLevel is None:
-            self.DepthButtons[index]['bg'] = COLOR_YELLOW
+        if self.ApplyRectBackground(index):
             warning_count = warning_count + 1
-        else:
-            self.DepthButtons[index]['bg'] = COLOR_DEFAULT
+        if self.ApplyDepthBackground(index):
+            warning_count = warning_count + 1
         if warning_count > 0:
-            self.EditButtons[index]['bg'] = COLOR_YELLOW
+            self.EditButtons[index]['bg'] = COLOR_TK_YELLOW
             if warning_count - warning_name > 0:
                 DisableWidget(self.OrderButtons[index])
                 if self.OrderValues[index].get():
                     self.OrderValues[index].set(False)
                     self.OrderButtonClick(index)
         else:
-            self.EditButtons[index]['bg'] = COLOR_DEFAULT
+            self.EditButtons[index]['bg'] = COLOR_TK_DEFAULT
             EnableWidget(self.OrderButtons[index])
+
+    def ApplyNameBackground(self, index: int):
+        is_missing = self.PickingItems[index].Name.startswith(DEFAULT_NAME)
+        if is_missing:
+            self.NameEntries[index]['bg'] = COLOR_TK_YELLOW
+        else:
+            self.NameEntries[index]['bg'] = COLOR_TK_DEFAULT
+        return is_missing
+
+    def ApplyAmountBackground(self, index:int):
+        is_missing = self.PickingItems[index].Amount == 0
+        if is_missing:
+            self.AmountEntries[index]['bg'] = COLOR_TK_YELLOW
+        else:
+            self.AmountEntries[index]['bg'] = COLOR_TK_DEFAULT
+        return is_missing
+    
+    def ApplyRectBackground(self, index:int):
+        is_missing = self.PickingItems[index].Rect is None or self.PickingItems[index].Rect.BottomRight is None
+        if is_missing:
+            self.RectButtons[index]['bg'] = COLOR_TK_YELLOW
+        else:
+            self.RectButtons[index]['bg'] = COLOR_TK_DEFAULT
+        return is_missing
+    
+    def ApplyDepthBackground(self, index:int):
+        is_missing = self.PickingItems[index].Depth is None or self.PickingItems[index].Depth.UpperLevel is None
+        if is_missing:
+            self.DepthButtons[index]['bg'] = COLOR_TK_YELLOW
+        else:
+            self.DepthButtons[index]['bg'] = COLOR_TK_DEFAULT
+        return is_missing
 
     def SetWidgets(self, index: int):
         self.OrderButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.OrderOffIcon, selectimage=self.OrderOnIcon, onvalue=True, offvalue=False, indicatoron=False))
-        self.NameLabels.append(Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=self.FONT_BOLD, relief=SOLID))
+        self.NameLabels.append(Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=FONT_TK_BOLD, relief=SOLID))
+        Label(self.Window.SettingsFrame, text='x', font=FONT_TK_BOLD).place(w=10, h=32, x=275, y=index*80)
+        self.AmountLabels.append(Label(self.Window.SettingsFrame, text=str(self.PickingItems[index].Amount), font=FONT_TK_BOLD, relief=SOLID))
         self.EyeButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EyeOffIcon, selectimage=self.EyeOnIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.BulbButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.BulbOffIcon, selectimage=self.BulbOnIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.EditButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.EditIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.DeleteButtons.append(Button(self.Window.SettingsFrame, image=self.DeleteIcon))
         self.UpButtons.append(Button(self.Window.SettingsFrame, image=self.UpIcon))
         self.DownButtons.append(Button(self.Window.SettingsFrame, image=self.DownIcon))
-        self.NameEntries.append(Entry(self.Window.SettingsFrame, font=self.FONT_NORMAL, justify=CENTER))
+        self.NameEntries.append(Entry(self.Window.SettingsFrame, font=FONT_TK_NORMAL, justify=CENTER))
+        Label(self.Window.SettingsFrame, text='x', font=FONT_TK_BOLD).place(w=10, h=32, x=275, y=index*80+40)
+        self.AmountEntries.append(Entry(self.Window.SettingsFrame, font=FONT_TK_NORMAL, justify=CENTER))
         self.RectButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.RectIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.DepthButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.DepthIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.SaveButtons.append(Button(self.Window.SettingsFrame, image=self.SaveIcon))
@@ -178,22 +210,24 @@ class PokaYokePicking():
             DisableWidget(self.DownButtons[index])
 
     def PlaceHiddenLabel(self, index: int):
-        self.HiddenLabels[index].place(w=312, h=32, x=40, y=index*80+40)
+        self.HiddenLabels[index].place(w=377, h=32, x=120, y=index*80+40)
 
     def PlaceWidgets(self, index: int):
         self.OrderButtons[index].place(w=32, h=32, x=0, y=index*80)
-        self.NameLabels[index].place(w=150, h=32, x=40, y=index*80)
-        self.EyeButtons[index].place(w=32, h=32, x=200, y=index*80)
-        self.BulbButtons[index].place(w=32, h=32, x=240, y=index*80)
-        self.EditButtons[index].place(w=32, h=32, x=280, y=index*80)
-        self.DeleteButtons[index].place(w=32, h=32, x=320, y=index*80)
-        self.UpButtons[index].place(w=32, h=32, x=360, y=index*80)
-        self.DownButtons[index].place(w=32, h=32, x=400, y=index*80)
-        self.NameEntries[index].place(w=150, h=32, x=40, y=index*80+40)
-        self.RectButtons[index].place(w=32, h=32, x=200, y=index*80+40)
-        self.DepthButtons[index].place(w=32, h=32, x=240, y=index*80+40)
-        self.SaveButtons[index].place(w=32, h=32, x=280, y=index*80+40)
-        self.CancelButtons[index].place(w=32, h=32, x=320, y=index*80+40)
+        self.NameLabels[index].place(w=150, h=32, x=120, y=index*80)
+        self.AmountLabels[index].place(w=47, h=32, x=290, y=index*80)
+        self.EyeButtons[index].place(w=32, h=32, x=345, y=index*80)
+        self.BulbButtons[index].place(w=32, h=32, x=385, y=index*80)
+        self.EditButtons[index].place(w=32, h=32, x=425, y=index*80)
+        self.DeleteButtons[index].place(w=32, h=32, x=465, y=index*80)
+        self.UpButtons[index].place(w=32, h=32, x=505, y=index*80)
+        self.DownButtons[index].place(w=32, h=32, x=545, y=index*80)
+        self.NameEntries[index].place(w=150, h=32, x=120, y=index*80+40)
+        self.AmountEntries[index].place(w=47, h=32, x=290, y=index*80+40)
+        self.RectButtons[index].place(w=32, h=32, x=345, y=index*80+40)
+        self.DepthButtons[index].place(w=32, h=32, x=385, y=index*80+40)
+        self.SaveButtons[index].place(w=32, h=32, x=425, y=index*80+40)
+        self.CancelButtons[index].place(w=32, h=32, x=465, y=index*80+40)
         self.PlaceHiddenLabel(index)
 
     def BindAllMouseEvents(self):
@@ -202,7 +236,7 @@ class PokaYokePicking():
         self.Window.VideoLabel.bind('<Button-3>', self.CaptureMouseRightClickEvent, add='+')
 
     def SetAddNewItemButton(self):
-        self.AddButton = Button(self.Window.SettingsFrame, text='Add new item', font=self.FONT_NORMAL,
+        self.AddButton = Button(self.Window.SettingsFrame, text='Add new item', font=FONT_TK_NORMAL,
             image=self.AddIcon, compound=LEFT, command=self.AddNewItemButtonClick)
         self.PlaceAddNewItemButton()
 
@@ -226,8 +260,8 @@ class PokaYokePicking():
         self.SaveConfigurationFile()
 
     def SetBlendScaleSection(self):
-        Label(self.Window.StreamingFrame, font=self.FONT_NORMAL, text='Color').place(w=45, h=32, x=0, y=440)
-        Label(self.Window.StreamingFrame, font=self.FONT_NORMAL, text='Depth').place(w=50, h=32, x=590, y=440)
+        Label(self.Window.StreamingFrame, font=FONT_TK_NORMAL, text='Color').place(w=45, h=32, x=0, y=440)
+        Label(self.Window.StreamingFrame, font=FONT_TK_NORMAL, text='Depth').place(w=50, h=32, x=590, y=440)
         self.BlendValue = IntVar(value=50)
         Scale(self.Window.StreamingFrame, from_=0, to=100, orient=HORIZONTAL, showvalue=0, variable=self.BlendValue).place(w=545, h=22, x=45, y=446)
 
@@ -304,6 +338,7 @@ class PokaYokePicking():
 
     def CopyPickingItem(self, index: int):
         self.EditItem = PickingItem(self.PickingItems[index].Name)
+        self.EditItem.Amount = self.PickingItems[index].Amount
         if self.PickingItems[index].Rect is not None:
             self.EditItem.SetRectTopLeftPoint(self.PickingItems[index].Rect.TopLeft.X, self.PickingItems[index].Rect.TopLeft.Y)
             if self.PickingItems[index].Rect.BottomRight is not None:
@@ -335,6 +370,7 @@ class PokaYokePicking():
             self.HiddenLabels[index].place_forget()
             self.CopyPickingItem(index)
             self.NameValues[index].set(self.EditItem.Name)
+            self.AmountValues[index].set(str(self.EditItem.Amount))
             for i in range(0, len(self.PickingItems)):
                 if i != index:
                     self.RestoreEditOptions(i)
@@ -343,16 +379,31 @@ class PokaYokePicking():
 
     def EditNameEntryClick(self, index: int):
         if self.EditValues[index].get():
+            self.NameEntries[index]['bg'] = COLOR_TK_WHITE
+            self.ApplyAmountBackground(index)
+            self.DepthValues[index].set(False)
+            self.RectValues[index].set(False)
+
+    def EditAmountEntryClick(self, index: int):
+        if self.EditValues[index].get():
+            self.AmountEntries[index]['bg'] = COLOR_TK_WHITE
+            self.ApplyNameBackground(index)
             self.DepthValues[index].set(False)
             self.RectValues[index].set(False)
 
     def EditRectButtonClick(self, index: int):
-        if self.EditValues[index].get() and self.RectValues[index].get():
-            self.DepthValues[index].set(False)
+        if self.EditValues[index].get():
+            self.ApplyNameBackground(index)
+            self.ApplyAmountBackground(index)
+            if self.RectValues[index].get():
+                self.DepthValues[index].set(False)
 
     def EditDepthButtonClick(self, index: int):
-        if self.EditValues[index].get() and self.DepthValues[index].get():
-            self.RectValues[index].set(False)
+        if self.EditValues[index].get():
+            self.ApplyNameBackground(index)
+            self.ApplyAmountBackground(index)
+            if self.DepthValues[index].get():
+                self.RectValues[index].set(False)
 
     def PlaceAffectedItems(self, del_index: int):
         length = self.GetListLength()
@@ -381,8 +432,10 @@ class PokaYokePicking():
         answer = messagebox.askyesno(title='Save Confirmation', message='Do you want to save the settings?')
         if answer:
             self.EditItem.Name = self.NameValues[index].get()
+            self.EditItem.Amount = int(self.AmountValues[index].get())
             self.PickingItems[index] = self.EditItem
             self.NameLabels[index]['text'] = self.PickingItems[index].Name
+            self.AmountLabels[index]['text'] = str(self.PickingItems[index].Amount)
             self.SaveConfigurationFile()
             self.ApplyBackgrounds(index)
             self.RestoreEditOptions(index)
@@ -477,51 +530,51 @@ class PokaYokePicking():
                     bot_r = item.Rect.BottomRight
                     if top_l is not None:
                         if bot_r is not None:
-                            cv2.rectangle(blended_image, (top_l.X, top_l.Y), (bot_r.X, bot_r.Y), COLOR_WHITE, 1)
+                            cv2.rectangle(blended_image, (top_l.X, top_l.Y), (bot_r.X, bot_r.Y), COLOR_CV_WHITE, 1)
                         else:
-                            cv2.drawMarker(blended_image, (top_l.X, top_l.Y), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
+                            cv2.drawMarker(blended_image, (top_l.X, top_l.Y), COLOR_CV_WHITE, cv2.MARKER_CROSS, 24, 1)
             if self.BulbValues[index].get():
                 if item.Depth is not None:
                     lower = item.Depth.LowerLevel
                     upper = item.Depth.UpperLevel
                     if lower is not None:
                         if upper is not None:
-                            cv2.arrowedLine(blended_image, (lower.X, lower.Y), (upper.X, upper.Y), COLOR_WHITE, 1)
+                            cv2.arrowedLine(blended_image, (lower.X, lower.Y), (upper.X, upper.Y), COLOR_CV_WHITE, 1)
                         else:
-                            cv2.circle(blended_image, (lower.X, lower.Y), 12, COLOR_WHITE, 1)
+                            cv2.circle(blended_image, (lower.X, lower.Y), 12, COLOR_CV_WHITE, 1)
 
         editing, index = self.IsAnyItemBeingEdited()
         if editing:
             if self.RectValues[index].get():
-                cv2.drawMarker(blended_image, (self.MouseX, self.MouseY), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
+                cv2.drawMarker(blended_image, (self.MouseX, self.MouseY), COLOR_CV_WHITE, cv2.MARKER_CROSS, 24, 1)
                 if self.EditItem.Rect is not None:
                     top_l = self.EditItem.Rect.TopLeft
                     if top_l is not None:
-                        cv2.drawMarker(blended_image, (top_l.X, top_l.Y), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
+                        cv2.drawMarker(blended_image, (top_l.X, top_l.Y), COLOR_CV_WHITE, cv2.MARKER_CROSS, 24, 1)
                     bot_r = self.EditItem.Rect.BottomRight
                     if bot_r is not None:
-                        cv2.drawMarker(blended_image, (bot_r.X, bot_r.Y), COLOR_WHITE, cv2.MARKER_CROSS, 24, 1)
-                        cv2.rectangle(blended_image, (top_l.X, top_l.Y), (bot_r.X, bot_r.Y), COLOR_WHITE, 1)
+                        cv2.drawMarker(blended_image, (bot_r.X, bot_r.Y), COLOR_CV_WHITE, cv2.MARKER_CROSS, 24, 1)
+                        cv2.rectangle(blended_image, (top_l.X, top_l.Y), (bot_r.X, bot_r.Y), COLOR_CV_WHITE, 1)
                     else:
-                        cv2.rectangle(blended_image, (top_l.X, top_l.Y), (self.MouseX, self.MouseY), COLOR_WHITE, 1)
+                        cv2.rectangle(blended_image, (top_l.X, top_l.Y), (self.MouseX, self.MouseY), COLOR_CV_WHITE, 1)
             if self.DepthValues[index].get():
-                cv2.circle(blended_image, (self.MouseX, self.MouseY), 12, COLOR_WHITE, 1)
+                cv2.circle(blended_image, (self.MouseX, self.MouseY), 12, COLOR_CV_WHITE, 1)
                 if self.EditItem.Depth is not None:
                     lower = self.EditItem.Depth.LowerLevel
                     if lower is not None:
-                        cv2.circle(blended_image, (lower.X, lower.Y), 12, COLOR_WHITE, 1)
+                        cv2.circle(blended_image, (lower.X, lower.Y), 12, COLOR_CV_WHITE, 1)
                     upper = self.EditItem.Depth.UpperLevel
                     if upper is not None:
-                        cv2.circle(blended_image, (upper.X, upper.Y), 12, COLOR_WHITE, 1)
-                        cv2.line(blended_image, (lower.X, lower.Y), (upper.X, upper.Y), COLOR_WHITE, 1)
+                        cv2.circle(blended_image, (upper.X, upper.Y), 12, COLOR_CV_WHITE, 1)
+                        cv2.line(blended_image, (lower.X, lower.Y), (upper.X, upper.Y), COLOR_CV_WHITE, 1)
                     else:
-                        cv2.line(blended_image, (lower.X, lower.Y), (self.MouseX, self.MouseY), COLOR_WHITE, 1)
+                        cv2.line(blended_image, (lower.X, lower.Y), (self.MouseX, self.MouseY), COLOR_CV_WHITE, 1)
 
         if self.CurrentItem is not None:
-            hand_color = COLOR_WHITE
-            x_color = COLOR_WHITE
-            y_color = COLOR_WHITE
-            z_color = COLOR_WHITE
+            hand_color = COLOR_CV_WHITE
+            x_color = COLOR_CV_WHITE
+            y_color = COLOR_CV_WHITE
+            z_color = COLOR_CV_WHITE
             current_rect = self.PickingItems[self.CurrentItem].Rect
             current_point1 = (current_rect.TopLeft.X, current_rect.TopLeft.Y)
             current_point2 = (current_rect.BottomRight.X, current_rect.BottomRight.Y)
@@ -532,23 +585,23 @@ class PokaYokePicking():
             for region in hand_regions:
                 xMin, yMin, xMax, yMax = CalculateRectFromRegion(blended_image, region)
                 if IsRectInsideItemRect(current_rect, xMin, yMin, xMax, yMax):
-                    hand_color = COLOR_GREEN
+                    hand_color = COLOR_CV_GREEN
                 else:
-                    hand_color = COLOR_RED
+                    hand_color = COLOR_CV_RED
                 x_point, y_point, z_point = CalculateTextPoints(xMin, yMin, xMax, yMax)
                 if IsRectInRangeX(current_rect, xMin, xMax):
-                    x_color = COLOR_GREEN
+                    x_color = COLOR_CV_GREEN
                 else:
-                    x_color = COLOR_RED
+                    x_color = COLOR_CV_RED
                 if IsRectInRangeY(current_rect, yMin, yMax):
-                    y_color = COLOR_GREEN
+                    y_color = COLOR_CV_GREEN
                 else:
-                    y_color = COLOR_RED
+                    y_color = COLOR_CV_RED
                 depth_value = CalculateDepthFromCoords(depth_image, xMin, yMin, xMax, yMax)
                 if IsDepthInRangeZ(depth_value, self.CurrentLowerZ, self.CurrentUpperZ):
-                    z_color = COLOR_GREEN
+                    z_color = COLOR_CV_GREEN
                 else:
-                    z_color = COLOR_RED
+                    z_color = COLOR_CV_RED
                 blended_image_copy = blended_image.copy()
                 cv2.rectangle(blended_image_copy, (xMin, yMin), (xMax, yMax), z_color, cv2.FILLED)
                 blended_image = cv2.addWeighted(blended_image, 0.8, blended_image_copy, 0.2, 0)

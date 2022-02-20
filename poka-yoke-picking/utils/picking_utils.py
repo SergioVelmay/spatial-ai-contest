@@ -26,6 +26,8 @@ class Depth:
 class PickingItem:
     def __init__(self, name: str):
         self.Name = name
+        self.Amount = 0
+        self.Image = None
         self.Rect = None
         self.Depth = None
 
@@ -83,6 +85,10 @@ def PickingItemFromJson(json: dict):
     item = None
     if 'Name' in json:
         item = PickingItem(json['Name'])
+        if 'Amount' in json:
+            item.Amount = json['Amount']
+        if 'Image' in json:
+            item.Image = json['Image']
         if 'Rect' in json:
             item.Rect = AreaFromJson(json['Rect'])
         if 'Depth' in json:
@@ -103,11 +109,11 @@ class Window():
         self.MainFrame = Frame(self.Root, width=1280, height=720)
         self.MainFrame.pack(expand=True)
         
-        self.SettingsFrame = Frame(self.MainFrame, width=440, height=680)
-        self.SettingsFrame.place(x=780, y=20)
+        self.SettingsFrame = Frame(self.MainFrame, width=580, height=680)
+        self.SettingsFrame.place(x=680, y=20)
 
         self.StreamingFrame = Frame(self.MainFrame, width=640, height=520)
-        self.StreamingFrame.place(x=70, y=20)
+        self.StreamingFrame.place(x=20, y=20)
 
         self.VideoLabel = Label(self.StreamingFrame, borderwidth=0, bg='white')
         self.VideoLabel.place( w=640, h=360, x=0, y=80)

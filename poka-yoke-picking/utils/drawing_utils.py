@@ -2,13 +2,21 @@ from utils.picking_utils import *
 from utils.mediapipe_utils import *
 
 CONFIG_FILE_NAME = 'config.json'
+
 MAX_PICKING_ITEMS = 8
-COLOR_WHITE = (255, 255, 255)
-COLOR_GREEN = (14, 168, 75)
-COLOR_RED = (236, 31, 36)
-COLOR_YELLOW = '#FFE61A' # (100, 90, 10)
-COLOR_DEFAULT = '#F0F0F0' # 'SystemWindow'
+
+COLOR_CV_WHITE = (255, 255, 255)
+COLOR_CV_GREEN = (14, 168, 75)
+COLOR_CV_RED = (236, 31, 36)
+
+COLOR_TK_YELLOW = '#FFE61A' # (100, 90, 10)
+COLOR_TK_DEFAULT = '#F0F0F0' # 'SystemWindow'
+COLOR_TK_WHITE = '#FFF' # 'white'
+
 DEFAULT_NAME = 'NewItem#'
+
+FONT_TK_BOLD = ('arial', 12, 'bold')
+FONT_TK_NORMAL = ('arial', 12, 'normal')
 
 def DisableWidget(widget: Widget):
     widget['state'] = DISABLED
