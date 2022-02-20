@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from tkinter import *
 from tkinter import messagebox
+from tkinter import filedialog
 from PIL import ImageTk
 from PIL import Image as PIL_Image
 from utils.picking_utils import *
@@ -32,6 +33,8 @@ class PokaYokePicking():
         self.MouseY = None
         # widgets lists
         self.OrderButtons = []
+        self.ImageLabels = []
+        self.FileButtons = []
         self.NameLabels = []
         self.AmountLabels = []
         self.EyeButtons = []
@@ -106,6 +109,7 @@ class PokaYokePicking():
         self.DeleteButtons[index]['command'] = lambda: self.DeleteButtonClick(index)
         self.UpButtons[index]['command'] = lambda: self.MoveUpButtonClick(index)
         self.DownButtons[index]['command'] = lambda: self.MoveDownButtonClick(index)
+        self.FileButtons[index]['command'] = lambda: self.FileButtonClick(index)
         self.RectButtons[index]['command'] = lambda: self.EditRectButtonClick(index)
         self.DepthButtons[index]['command'] = lambda: self.EditDepthButtonClick(index)
         self.SaveButtons[index]['command'] = lambda: self.SaveButtonClick(index)
@@ -178,8 +182,13 @@ class PokaYokePicking():
             self.DepthButtons[index]['bg'] = COLOR_TK_DEFAULT
         return is_missing
 
+    def SetImageIfExists(self, index: int):
+        if self.PickingItems[index].Image != None:
+            self.ImageLabels[index]['image'] = PhotoImage(file=self.PickingItems[index].Image)
+
     def SetWidgets(self, index: int):
         self.OrderButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.OrderOffIcon, selectimage=self.OrderOnIcon, onvalue=True, offvalue=False, indicatoron=False))
+        self.ImageLabels.append(Label(self.Window.SettingsFrame, bg=COLOR_TK_WHITE))
         self.NameLabels.append(Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=FONT_TK_BOLD, relief=SOLID))
         Label(self.Window.SettingsFrame, text='x', font=FONT_TK_BOLD).place(w=10, h=32, x=275, y=index*80)
         self.AmountLabels.append(Label(self.Window.SettingsFrame, text=str(self.PickingItems[index].Amount), font=FONT_TK_BOLD, relief=SOLID))
@@ -196,10 +205,12 @@ class PokaYokePicking():
         self.DepthButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.DepthIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.SaveButtons.append(Button(self.Window.SettingsFrame, image=self.SaveIcon))
         self.CancelButtons.append(Button(self.Window.SettingsFrame, image=self.CancelIcon))
+        self.FileButtons.append(Button(self.Window.SettingsFrame, text='File...'))
         self.HiddenLabels.append(Label(self.Window.SettingsFrame))
         self.AssignVariables(index)
         self.AssignCommands(index)
         self.ApplyBackgrounds(index)
+        self.SetImageIfExists(index)
     
     def SetOrderAndArrows(self, index: int, length: int):
         EnableWidget(self.UpButtons[index])
@@ -209,11 +220,12 @@ class PokaYokePicking():
         if index == length - 1:
             DisableWidget(self.DownButtons[index])
 
-    def PlaceHiddenLabel(self, index: int):
+    def PlaceHiddenWidgets(self, index: int):
         self.HiddenLabels[index].place(w=377, h=32, x=120, y=index*80+40)
 
     def PlaceWidgets(self, index: int):
         self.OrderButtons[index].place(w=32, h=32, x=0, y=index*80)
+        self.ImageLabels[index].place(w=72, h=72, x=40, y=index*80)
         self.NameLabels[index].place(w=150, h=32, x=120, y=index*80)
         self.AmountLabels[index].place(w=47, h=32, x=290, y=index*80)
         self.EyeButtons[index].place(w=32, h=32, x=345, y=index*80)
@@ -222,13 +234,14 @@ class PokaYokePicking():
         self.DeleteButtons[index].place(w=32, h=32, x=465, y=index*80)
         self.UpButtons[index].place(w=32, h=32, x=505, y=index*80)
         self.DownButtons[index].place(w=32, h=32, x=545, y=index*80)
+        self.FileButtons[index].place(w=72, h=32, x=40, y=index*80+40)
         self.NameEntries[index].place(w=150, h=32, x=120, y=index*80+40)
         self.AmountEntries[index].place(w=47, h=32, x=290, y=index*80+40)
         self.RectButtons[index].place(w=32, h=32, x=345, y=index*80+40)
         self.DepthButtons[index].place(w=32, h=32, x=385, y=index*80+40)
         self.SaveButtons[index].place(w=32, h=32, x=425, y=index*80+40)
         self.CancelButtons[index].place(w=32, h=32, x=465, y=index*80+40)
-        self.PlaceHiddenLabel(index)
+        self.PlaceHiddenWidgets(index)
 
     def BindAllMouseEvents(self):
         self.Window.VideoLabel.bind('<Motion>', self.CaptureMouseMotionEvent, add='+')
@@ -259,15 +272,10 @@ class PokaYokePicking():
         self.PlaceAddNewItemButton()
         self.SaveConfigurationFile()
 
-    def SetBlendScaleSection(self):
-        Label(self.Window.StreamingFrame, font=FONT_TK_NORMAL, text='Color').place(w=45, h=32, x=0, y=440)
-        Label(self.Window.StreamingFrame, font=FONT_TK_NORMAL, text='Depth').place(w=50, h=32, x=590, y=440)
-        self.BlendValue = IntVar(value=50)
-        Scale(self.Window.StreamingFrame, from_=0, to=100, orient=HORIZONTAL, showvalue=0, variable=self.BlendValue).place(w=545, h=22, x=45, y=446)
-
     def SwapWidgets(self, index: int, new_index: int):
         self.OrderButtons[index], self.OrderButtons[new_index] = self.OrderButtons[new_index], self.OrderButtons[index]
         self.NameLabels[index], self.NameLabels[new_index] = self.NameLabels[new_index], self.NameLabels[index]
+        self.AmountLabels[index], self.AmountLabels[new_index] = self.AmountLabels[new_index], self.AmountLabels[index]
         self.EyeButtons[index], self.EyeButtons[new_index] = self.EyeButtons[new_index], self.EyeButtons[index]
         self.BulbButtons[index], self.BulbButtons[new_index] = self.BulbButtons[new_index], self.BulbButtons[index]
         self.EditButtons[index], self.EditButtons[new_index] = self.EditButtons[new_index], self.EditButtons[index]
@@ -275,6 +283,7 @@ class PokaYokePicking():
         self.UpButtons[index], self.UpButtons[new_index] = self.UpButtons[new_index], self.UpButtons[index]
         self.DownButtons[index], self.DownButtons[new_index] = self.DownButtons[new_index], self.DownButtons[index]
         self.NameEntries[index], self.NameEntries[new_index] = self.NameEntries[new_index], self.NameEntries[index]
+        self.AmountEntries[index], self.AmountEntries[new_index] = self.AmountEntries[new_index], self.AmountEntries[index]
         self.RectButtons[index], self.RectButtons[new_index] = self.RectButtons[new_index], self.RectButtons[index]
         self.DepthButtons[index], self.DepthButtons[new_index] = self.DepthButtons[new_index], self.DepthButtons[index]
         self.SaveButtons[index], self.SaveButtons[new_index] = self.SaveButtons[new_index], self.SaveButtons[index]
@@ -286,12 +295,14 @@ class PokaYokePicking():
         self.BulbValues[index], self.BulbValues[new_index] = self.BulbValues[new_index], self.BulbValues[index]
         self.EditValues[index], self.EditValues[new_index] = self.EditValues[new_index], self.EditValues[index]
         self.NameValues[index], self.NameValues[new_index] = self.NameValues[new_index], self.NameValues[index]
+        self.AmountValues[index], self.AmountValues[new_index] = self.AmountValues[new_index], self.AmountValues[index]
         self.RectValues[index], self.RectValues[new_index] = self.RectValues[new_index], self.RectValues[index]
         self.DepthValues[index], self.DepthValues[new_index] = self.DepthValues[new_index], self.DepthValues[index]
 
     def ForgetWidgets(self, index: int):
         self.OrderButtons[index].place_forget()
         self.NameLabels[index].place_forget()
+        self.AmountLabels[index].place_forget()
         self.EyeButtons[index].place_forget()
         self.BulbButtons[index].place_forget()
         self.EditButtons[index].place_forget()
@@ -299,6 +310,7 @@ class PokaYokePicking():
         self.UpButtons[index].place_forget()
         self.DownButtons[index].place_forget()
         self.NameEntries[index].place_forget()
+        self.AmountEntries[index].place_forget()
         self.RectButtons[index].place_forget()
         self.DepthButtons[index].place_forget()
         self.SaveButtons[index].place_forget()
@@ -309,6 +321,7 @@ class PokaYokePicking():
         self.ForgetWidgets(index)
         del self.OrderButtons[index]
         del self.NameLabels[index]
+        del self.AmountLabels[index]
         del self.EyeButtons[index]
         del self.BulbButtons[index]
         del self.EditButtons[index]
@@ -316,6 +329,7 @@ class PokaYokePicking():
         del self.UpButtons[index]
         del self.DownButtons[index]
         del self.NameEntries[index]
+        del self.AmountEntries[index]
         del self.RectButtons[index]
         del self.DepthButtons[index]
         del self.SaveButtons[index]
@@ -328,6 +342,7 @@ class PokaYokePicking():
         del self.BulbValues[index]
         del self.EditValues[index]
         del self.NameValues[index]
+        del self.AmountValues[index]
         del self.RectValues[index]
         del self.DepthValues[index]
     
@@ -352,9 +367,10 @@ class PokaYokePicking():
         self.Edit = None
         self.EditValues[index].set(False)
         self.NameValues[index].set('')
+        self.AmountValues[index].set('')
         self.RectValues[index].set(False)
         self.DepthValues[index].set(False)
-        self.PlaceHiddenLabel(index)
+        self.PlaceHiddenWidgets(index)
 
     def OrderButtonClick(self, index: int):
         if self.OrderValues[index].get():
@@ -364,6 +380,13 @@ class PokaYokePicking():
                     value.set(False)
         else:
             self.CurrentItem = None
+
+    def FileButtonClick(self, index: int):
+        file_name = filedialog.askopenfilename(
+            title='Select an Image',
+            initialdir='/')
+
+        print(file_name)
 
     def EditButtonClick(self, index: int):
         if self.EditValues[index].get():
@@ -519,6 +542,12 @@ class PokaYokePicking():
             frame_depth = cv2.cvtColor(depth_image, cv2.COLOR_BGR2RGB)
         blended_image = cv2.addWeighted(frame_color, blend_color, frame_depth, blend_depth, 0)
         return blended_image
+
+    def SetBlendScaleSection(self):
+        Label(self.Window.StreamingFrame, font=FONT_TK_NORMAL, text='Color').place(w=45, h=32, x=0, y=440)
+        Label(self.Window.StreamingFrame, font=FONT_TK_NORMAL, text='Depth').place(w=50, h=32, x=590, y=440)
+        self.BlendValue = IntVar(value=50)
+        Scale(self.Window.StreamingFrame, from_=0, to=100, orient=HORIZONTAL, showvalue=0, variable=self.BlendValue).place(w=545, h=22, x=45, y=446)
 
     def DrawImage(self, color_image: np.ndarray, depth_image: np.ndarray, hand_regions: list):
         blended_image = self.GetBlendedImage(color_image, depth_image)

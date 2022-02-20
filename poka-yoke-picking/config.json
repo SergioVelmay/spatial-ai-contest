@@ -1,10 +1,12 @@
 [
     {
         "Name": "111AAA111",
+        "Amount": 3,
+        "Image": null,
         "Rect": {
             "TopLeft": {
-                "X": 58,
-                "Y": 6
+                "X": 56,
+                "Y": 5
             },
             "BottomRight": {
                 "X": 183,
@@ -24,6 +26,8 @@
     },
     {
         "Name": "222BBB222",
+        "Amount": 1,
+        "Image": null,
         "Rect": {
             "TopLeft": {
                 "X": 193,
@@ -47,6 +51,8 @@
     },
     {
         "Name": "CurrentItem3",
+        "Amount": 2,
+        "Image": null,
         "Rect": {
             "TopLeft": {
                 "X": 328,
@@ -70,6 +76,8 @@
     },
     {
         "Name": "444DDD444",
+        "Amount": 2,
+        "Image": null,
         "Rect": {
             "TopLeft": {
                 "X": 463,
@@ -86,13 +94,15 @@
                 "Y": 124
             },
             "UpperLevel": {
-                "X": 457,
-                "Y": 21
+                "X": 459,
+                "Y": 23
             }
         }
     },
     {
         "Name": "555EEE555",
+        "Amount": 4,
+        "Image": null,
         "Rect": {
             "TopLeft": {
                 "X": 91,
@@ -116,6 +126,8 @@
     },
     {
         "Name": "666FFF666",
+        "Amount": 1,
+        "Image": null,
         "Rect": {
             "TopLeft": {
                 "X": 211,
@@ -138,7 +150,9 @@
         }
     },
     {
-        "Name": "NewItem#7",
+        "Name": "Item#7",
+        "Amount": 2,
+        "Image": null,
         "Rect": {
             "TopLeft": {
                 "X": 327,
@@ -162,14 +176,16 @@
     },
     {
         "Name": "888",
+        "Amount": 3,
+        "Image": null,
         "Rect": {
             "TopLeft": {
-                "X": 443,
-                "Y": 206
+                "X": 445,
+                "Y": 207
             },
             "BottomRight": {
-                "X": 554,
-                "Y": 349
+                "X": 555,
+                "Y": 350
             }
         },
         "Depth": {
