@@ -382,9 +382,12 @@ class PokaYokePicking():
             self.CurrentItem = None
 
     def FileButtonClick(self, index: int):
+        file_types=[('Image Files', ('.jpg', '.png', '.gif'))]
+
         file_name = filedialog.askopenfilename(
             title='Select an Image',
-            initialdir='/')
+            initialdir='/',
+            filetypes=file_types)
 
         print(file_name)
 
