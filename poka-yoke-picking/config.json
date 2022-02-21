@@ -1,59 +1,65 @@
 [
     {
         "Name": "111AAA111",
+        "Amount": 3,
+        "Image": "images/1_6209519.jpg",
         "Rect": {
             "TopLeft": {
-                "X": 1,
-                "Y": 1
+                "X": 56,
+                "Y": 5
             },
             "BottomRight": {
-                "X": 1,
-                "Y": 1
+                "X": 183,
+                "Y": 180
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 11,
-                "Y": 11
+                "X": 126,
+                "Y": 147
             },
             "UpperLevel": {
-                "X": 11,
-                "Y": 11
+                "X": 188,
+                "Y": 20
             }
         }
     },
     {
         "Name": "222BBB222",
+        "Amount": 1,
+        "Image": "images/2_4121715.jpg",
         "Rect": {
             "TopLeft": {
-                "X": 2,
-                "Y": 2
+                "X": 193,
+                "Y": 6
             },
             "BottomRight": {
-                "X": 2,
-                "Y": 2
+                "X": 316,
+                "Y": 180
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 22,
-                "Y": 22
+                "X": 275,
+                "Y": 102
             },
             "UpperLevel": {
-                "X": 22,
-                "Y": 22
+                "X": 321,
+                "Y": 115
             }
         }
     },
     {
         "Name": "CurrentItem3",
+        "Amount": 2,
+        "Image": "images/3_6299413.jpg",
         "Rect": {
             "TopLeft": {
-                "X": 330,
+                "X": 328,
                 "Y": 7
             },
             "BottomRight": {
-                "X": 450,
+                "X": 451,
                 "Y": 179
             }
         },
@@ -63,82 +69,134 @@
                 "Y": 149
             },
             "UpperLevel": {
-                "X": 458,
-                "Y": 62
+                "X": 323,
+                "Y": 56
             }
         }
     },
     {
         "Name": "444DDD444",
+        "Amount": 2,
+        "Image": "images/4_4666999.jpg",
         "Rect": {
             "TopLeft": {
-                "X": 231,
-                "Y": 106
+                "X": 463,
+                "Y": 5
             },
             "BottomRight": {
-                "X": 355,
-                "Y": 262
-            }
-        },
-        "Depth": null
-    },
-    {
-        "Name": "555EEE555",
-        "Rect": {
-            "TopLeft": {
-                "X": 201,
-                "Y": 123
-            },
-            "BottomRight": {
-                "X": 354,
-                "Y": 255
+                "X": 586,
+                "Y": 179
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 316,
-                "Y": 263
+                "X": 525,
+                "Y": 124
             },
             "UpperLevel": {
-                "X": 318,
-                "Y": 120
+                "X": 459,
+                "Y": 23
+            }
+        }
+    },
+    {
+        "Name": "555EEE555",
+        "Amount": 4,
+        "Image": "images/5_4142865.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 91,
+                "Y": 208
+            },
+            "BottomRight": {
+                "X": 202,
+                "Y": 352
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 167,
+                "Y": 303
+            },
+            "UpperLevel": {
+                "X": 206,
+                "Y": 217
             }
         }
     },
     {
         "Name": "666FFF666",
-        "Rect": null,
+        "Amount": 1,
+        "Image": "images/6_6089119.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 211,
+                "Y": 208
+            },
+            "BottomRight": {
+                "X": 317,
+                "Y": 349
+            }
+        },
         "Depth": {
             "LowerLevel": {
-                "X": 360,
-                "Y": 283
+                "X": 251,
+                "Y": 258
             },
             "UpperLevel": {
-                "X": 359,
-                "Y": 78
+                "X": 321,
+                "Y": 300
             }
         }
     },
     {
-        "Name": "NewItem#7",
-        "Rect": null,
-        "Depth": null
+        "Name": "Item#7",
+        "Amount": 2,
+        "Image": "images/7_4206482.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 327,
+                "Y": 207
+            },
+            "BottomRight": {
+                "X": 434,
+                "Y": 350
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 355,
+                "Y": 305
+            },
+            "UpperLevel": {
+                "X": 322,
+                "Y": 250
+            }
+        }
     },
     {
         "Name": "888",
+        "Amount": 3,
+        "Image": "images/8_6321747.jpg",
         "Rect": {
             "TopLeft": {
-                "X": 443,
+                "X": 445,
                 "Y": 207
             },
-            "BottomRight": null
+            "BottomRight": {
+                "X": 555,
+                "Y": 350
+            }
         },
         "Depth": {
             "LowerLevel": {
                 "X": 468,
-                "Y": 314
+                "Y": 310
             },
-            "UpperLevel": null
+            "UpperLevel": {
+                "X": 438,
+                "Y": 217
+            }
         }
     }
 ]
