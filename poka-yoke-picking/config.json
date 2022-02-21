@@ -2,7 +2,7 @@
     {
         "Name": "111AAA111",
         "Amount": 3,
-        "Image": null,
+        "Image": "images/1_6209519.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 56,
@@ -27,7 +27,7 @@
     {
         "Name": "222BBB222",
         "Amount": 1,
-        "Image": null,
+        "Image": "images/2_4121715.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 193,
@@ -52,7 +52,7 @@
     {
         "Name": "CurrentItem3",
         "Amount": 2,
-        "Image": null,
+        "Image": "images/3_6299413.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 328,
@@ -77,7 +77,7 @@
     {
         "Name": "444DDD444",
         "Amount": 2,
-        "Image": null,
+        "Image": "images/4_4666999.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 463,
@@ -102,7 +102,7 @@
     {
         "Name": "555EEE555",
         "Amount": 4,
-        "Image": null,
+        "Image": "images/5_4142865.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 91,
@@ -127,7 +127,7 @@
     {
         "Name": "666FFF666",
         "Amount": 1,
-        "Image": null,
+        "Image": "images/6_6089119.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 211,
@@ -152,7 +152,7 @@
     {
         "Name": "Item#7",
         "Amount": 2,
-        "Image": null,
+        "Image": "images/7_4206482.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 327,
@@ -177,7 +177,7 @@
     {
         "Name": "888",
         "Amount": 3,
-        "Image": null,
+        "Image": "images/8_6321747.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 445,
