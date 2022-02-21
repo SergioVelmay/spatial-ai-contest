@@ -34,7 +34,6 @@ class PokaYokePicking():
         # widgets lists
         self.OrderButtons = []
         self.ImageLabels = []
-        self.FileButtons = []
         self.NameLabels = []
         self.AmountLabels = []
         self.EyeButtons = []
@@ -43,6 +42,7 @@ class PokaYokePicking():
         self.DeleteButtons = []
         self.UpButtons = []
         self.DownButtons = []
+        self.FileButtons = []
         self.NameEntries = []
         self.AmountEntries = []
         self.RectButtons = []
@@ -129,10 +129,13 @@ class PokaYokePicking():
 
     def ApplyBackgrounds(self, index: int):
         warning_count = 0
-        warning_name = 0
+        non_mandatory = 0
+        if self.ApplyFileBackground(index):
+            warning_count = warning_count + 1
+            non_mandatory = non_mandatory + 1
         if self.ApplyNameBackground(index):
             warning_count = warning_count + 1
-            warning_name = 1
+            non_mandatory = non_mandatory + 1
         if self.ApplyAmountBackground(index):
             warning_count = warning_count + 1
         if self.ApplyRectBackground(index):
@@ -141,7 +144,7 @@ class PokaYokePicking():
             warning_count = warning_count + 1
         if warning_count > 0:
             self.EditButtons[index]['bg'] = COLOR_TK_YELLOW
-            if warning_count - warning_name > 0:
+            if warning_count - non_mandatory > 0:
                 DisableWidget(self.OrderButtons[index])
                 if self.OrderValues[index].get():
                     self.OrderValues[index].set(False)
@@ -149,6 +152,14 @@ class PokaYokePicking():
         else:
             self.EditButtons[index]['bg'] = COLOR_TK_DEFAULT
             EnableWidget(self.OrderButtons[index])
+
+    def ApplyFileBackground(self, index: int):
+        is_missing = self.PickingItems[index].Image == None
+        if is_missing:
+            self.FileButtons[index]['bg'] = COLOR_TK_YELLOW
+        else:
+            self.FileButtons[index]['bg'] = COLOR_TK_DEFAULT
+        return is_missing
 
     def ApplyNameBackground(self, index: int):
         is_missing = self.PickingItems[index].Name.startswith(DEFAULT_NAME)
@@ -183,12 +194,19 @@ class PokaYokePicking():
         return is_missing
 
     def SetImageIfExists(self, index: int):
-        if self.PickingItems[index].Image != None:
-            self.ImageLabels[index]['image'] = PhotoImage(file=self.PickingItems[index].Image)
+        if self.PickingItems[index].Image == None:
+            self.ImageLabels[index]['image'] = ''
+        else:
+            image_path = self.PickingItems[index].Image
+            image_pil = PIL_Image.open(image_path)
+            image_tk = ImageTk.PhotoImage(image=image_pil)
+            self.ImageLabels[index].image_tk = image_tk
+            self.ImageLabels[index]['image'] = image_tk
 
     def SetWidgets(self, index: int):
         self.OrderButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.OrderOffIcon, selectimage=self.OrderOnIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.ImageLabels.append(Label(self.Window.SettingsFrame, bg=COLOR_TK_WHITE))
+        self.SetImageIfExists(index)
         self.NameLabels.append(Label(self.Window.SettingsFrame, text=self.PickingItems[index].Name, font=FONT_TK_BOLD, relief=SOLID))
         Label(self.Window.SettingsFrame, text='x', font=FONT_TK_BOLD).place(w=10, h=32, x=275, y=index*80)
         self.AmountLabels.append(Label(self.Window.SettingsFrame, text=str(self.PickingItems[index].Amount), font=FONT_TK_BOLD, relief=SOLID))
@@ -198,6 +216,7 @@ class PokaYokePicking():
         self.DeleteButtons.append(Button(self.Window.SettingsFrame, image=self.DeleteIcon))
         self.UpButtons.append(Button(self.Window.SettingsFrame, image=self.UpIcon))
         self.DownButtons.append(Button(self.Window.SettingsFrame, image=self.DownIcon))
+        self.FileButtons.append(Button(self.Window.SettingsFrame, text='File...'))
         self.NameEntries.append(Entry(self.Window.SettingsFrame, font=FONT_TK_NORMAL, justify=CENTER))
         Label(self.Window.SettingsFrame, text='x', font=FONT_TK_BOLD).place(w=10, h=32, x=275, y=index*80+40)
         self.AmountEntries.append(Entry(self.Window.SettingsFrame, font=FONT_TK_NORMAL, justify=CENTER))
@@ -205,12 +224,10 @@ class PokaYokePicking():
         self.DepthButtons.append(Checkbutton(self.Window.SettingsFrame, image=self.DepthIcon, onvalue=True, offvalue=False, indicatoron=False))
         self.SaveButtons.append(Button(self.Window.SettingsFrame, image=self.SaveIcon))
         self.CancelButtons.append(Button(self.Window.SettingsFrame, image=self.CancelIcon))
-        self.FileButtons.append(Button(self.Window.SettingsFrame, text='File...'))
         self.HiddenLabels.append(Label(self.Window.SettingsFrame))
         self.AssignVariables(index)
         self.AssignCommands(index)
         self.ApplyBackgrounds(index)
-        self.SetImageIfExists(index)
     
     def SetOrderAndArrows(self, index: int, length: int):
         EnableWidget(self.UpButtons[index])
@@ -222,6 +239,8 @@ class PokaYokePicking():
 
     def PlaceHiddenWidgets(self, index: int):
         self.HiddenLabels[index].place(w=377, h=32, x=120, y=index*80+40)
+        DisableWidget(self.FileButtons[index])
+        self.FileButtons[index].place_forget()
 
     def PlaceWidgets(self, index: int):
         self.OrderButtons[index].place(w=32, h=32, x=0, y=index*80)
@@ -274,6 +293,7 @@ class PokaYokePicking():
 
     def SwapWidgets(self, index: int, new_index: int):
         self.OrderButtons[index], self.OrderButtons[new_index] = self.OrderButtons[new_index], self.OrderButtons[index]
+        self.ImageLabels[index], self.ImageLabels[new_index] = self.ImageLabels[new_index], self.ImageLabels[index]
         self.NameLabels[index], self.NameLabels[new_index] = self.NameLabels[new_index], self.NameLabels[index]
         self.AmountLabels[index], self.AmountLabels[new_index] = self.AmountLabels[new_index], self.AmountLabels[index]
         self.EyeButtons[index], self.EyeButtons[new_index] = self.EyeButtons[new_index], self.EyeButtons[index]
@@ -282,6 +302,7 @@ class PokaYokePicking():
         self.DeleteButtons[index], self.DeleteButtons[new_index] = self.DeleteButtons[new_index], self.DeleteButtons[index]
         self.UpButtons[index], self.UpButtons[new_index] = self.UpButtons[new_index], self.UpButtons[index]
         self.DownButtons[index], self.DownButtons[new_index] = self.DownButtons[new_index], self.DownButtons[index]
+        self.FileButtons[index], self.FileButtons[new_index] = self.FileButtons[new_index], self.FileButtons[index]
         self.NameEntries[index], self.NameEntries[new_index] = self.NameEntries[new_index], self.NameEntries[index]
         self.AmountEntries[index], self.AmountEntries[new_index] = self.AmountEntries[new_index], self.AmountEntries[index]
         self.RectButtons[index], self.RectButtons[new_index] = self.RectButtons[new_index], self.RectButtons[index]
@@ -301,6 +322,7 @@ class PokaYokePicking():
 
     def ForgetWidgets(self, index: int):
         self.OrderButtons[index].place_forget()
+        self.ImageLabels[index].place_forget()
         self.NameLabels[index].place_forget()
         self.AmountLabels[index].place_forget()
         self.EyeButtons[index].place_forget()
@@ -309,6 +331,7 @@ class PokaYokePicking():
         self.DeleteButtons[index].place_forget()
         self.UpButtons[index].place_forget()
         self.DownButtons[index].place_forget()
+        self.FileButtons[index].place_forget()
         self.NameEntries[index].place_forget()
         self.AmountEntries[index].place_forget()
         self.RectButtons[index].place_forget()
@@ -320,6 +343,7 @@ class PokaYokePicking():
     def RemoveWidgets(self, index: int):
         self.ForgetWidgets(index)
         del self.OrderButtons[index]
+        del self.ImageLabels[index]
         del self.NameLabels[index]
         del self.AmountLabels[index]
         del self.EyeButtons[index]
@@ -328,6 +352,7 @@ class PokaYokePicking():
         del self.DeleteButtons[index]
         del self.UpButtons[index]
         del self.DownButtons[index]
+        del self.FileButtons[index]
         del self.NameEntries[index]
         del self.AmountEntries[index]
         del self.RectButtons[index]
@@ -354,6 +379,7 @@ class PokaYokePicking():
     def CopyPickingItem(self, index: int):
         self.EditItem = PickingItem(self.PickingItems[index].Name)
         self.EditItem.Amount = self.PickingItems[index].Amount
+        self.EditItem.Image = self.PickingItems[index].Image
         if self.PickingItems[index].Rect is not None:
             self.EditItem.SetRectTopLeftPoint(self.PickingItems[index].Rect.TopLeft.X, self.PickingItems[index].Rect.TopLeft.Y)
             if self.PickingItems[index].Rect.BottomRight is not None:
@@ -364,7 +390,7 @@ class PokaYokePicking():
                 self.EditItem.SetDepthUpperLevelPoint(self.PickingItems[index].Depth.UpperLevel.X, self.PickingItems[index].Depth.UpperLevel.Y)
 
     def RestoreEditOptions(self, index: int):
-        self.Edit = None
+        self.SetImageIfExists(index)
         self.EditValues[index].set(False)
         self.NameValues[index].set('')
         self.AmountValues[index].set('')
@@ -382,18 +408,26 @@ class PokaYokePicking():
             self.CurrentItem = None
 
     def FileButtonClick(self, index: int):
-        file_types=[('Image Files', ('.jpg', '.png', '.gif'))]
+        if self.EditValues[index].get():
+            file_types=[('Image Files', ('.jpg', '.png', '.gif'))]
+            file_name = filedialog.askopenfilename(
+                title='Image Selection',
+                initialdir='/Users/',
+                filetypes=file_types)
+            self.SetProvisionalImage(index, file_name)
 
-        file_name = filedialog.askopenfilename(
-            title='Select an Image',
-            initialdir='/',
-            filetypes=file_types)
-
-        print(file_name)
+    def SetProvisionalImage(self, index: int, path: str):
+        self.EditItem.Image = path
+        image_pil = PIL_Image.open(path)
+        image_tk = ImageTk.PhotoImage(image=image_pil)
+        self.ImageLabels[index].image_tk = image_tk
+        self.ImageLabels[index]['image'] = image_tk
 
     def EditButtonClick(self, index: int):
         if self.EditValues[index].get():
             self.HiddenLabels[index].place_forget()
+            EnableWidget(self.FileButtons[index])
+            self.FileButtons[index].place(w=72, h=32, x=40, y=index*80+40)
             self.CopyPickingItem(index)
             self.NameValues[index].set(self.EditItem.Name)
             self.AmountValues[index].set(str(self.EditItem.Amount))
@@ -460,9 +494,10 @@ class PokaYokePicking():
             self.EditItem.Name = self.NameValues[index].get()
             self.EditItem.Amount = int(self.AmountValues[index].get())
             self.PickingItems[index] = self.EditItem
+            self.SaveConfigurationFile()
+            self.SetImageIfExists(index)
             self.NameLabels[index]['text'] = self.PickingItems[index].Name
             self.AmountLabels[index]['text'] = str(self.PickingItems[index].Amount)
-            self.SaveConfigurationFile()
             self.ApplyBackgrounds(index)
             self.RestoreEditOptions(index)
 
