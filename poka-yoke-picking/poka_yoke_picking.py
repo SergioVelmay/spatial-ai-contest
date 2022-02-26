@@ -487,19 +487,20 @@ class PokaYokePicking():
                 self.AssignVariables(index)
                 self.AssignCommands(index)
                 self.PlaceWidgets(index)
+                if self.OrderValues[index].get():
+                    self.CurrentItem = index
 
     def DeleteButtonClick(self, index: int):
         answer = messagebox.askyesno(title='Delete Confirmation', message='Do you want to delete this item?')
         if answer:
             del self.PickingItems[index]
             self.SaveConfigurationFile()
+            if self.OrderValues[index].get():
+                self.CurrentItem = None
             self.RemoveWidgets(index)
             self.RemoveVariables(index)
             self.PlaceAffectedItems(index)
             self.PlaceAddNewItemButton()
-            if index != self.GetListLength():
-                if self.OrderValues[index].get():
-                    self.OrderButtonClick(index)
 
     def SaveButtonClick(self, index: int):
         answer = messagebox.askyesno(title='Save Confirmation', message='Do you want to save the settings?')
