@@ -1,201 +1,201 @@
 [
     {
-        "Name": "111AAA111",
-        "Amount": 3,
+        "Name": "6209519",
+        "Amount": 2,
         "Image": "images/1_6209519.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 56,
-                "Y": 5
-            },
-            "BottomRight": {
-                "X": 183,
-                "Y": 180
-            }
-        },
-        "Depth": {
-            "LowerLevel": {
-                "X": 126,
-                "Y": 147
-            },
-            "UpperLevel": {
-                "X": 188,
-                "Y": 20
-            }
-        }
-    },
-    {
-        "Name": "222BBB222",
-        "Amount": 1,
-        "Image": "images/2_4121715.jpg",
-        "Rect": {
-            "TopLeft": {
-                "X": 193,
                 "Y": 6
             },
             "BottomRight": {
+                "X": 184,
+                "Y": 179
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 134,
+                "Y": 87
+            },
+            "UpperLevel": {
+                "X": 190,
+                "Y": 133
+            }
+        }
+    },
+    {
+        "Name": "4121715",
+        "Amount": 4,
+        "Image": "images/2_4121715.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 194,
+                "Y": 5
+            },
+            "BottomRight": {
                 "X": 316,
+                "Y": 179
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 262,
+                "Y": 116
+            },
+            "UpperLevel": {
+                "X": 323,
+                "Y": 36
+            }
+        }
+    },
+    {
+        "Name": "6299413",
+        "Amount": 3,
+        "Image": "images/3_6299413.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 329,
+                "Y": 5
+            },
+            "BottomRight": {
+                "X": 453,
+                "Y": 179
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 380,
+                "Y": 67
+            },
+            "UpperLevel": {
+                "X": 323,
+                "Y": 134
+            }
+        }
+    },
+    {
+        "Name": "4666999",
+        "Amount": 1,
+        "Image": "images/4_4666999.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 465,
+                "Y": 6
+            },
+            "BottomRight": {
+                "X": 588,
                 "Y": 180
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 275,
-                "Y": 102
-            },
-            "UpperLevel": {
-                "X": 321,
-                "Y": 115
-            }
-        }
-    },
-    {
-        "Name": "CurrentItem3",
-        "Amount": 2,
-        "Image": "images/3_6299413.jpg",
-        "Rect": {
-            "TopLeft": {
-                "X": 328,
-                "Y": 7
-            },
-            "BottomRight": {
-                "X": 451,
-                "Y": 179
-            }
-        },
-        "Depth": {
-            "LowerLevel": {
-                "X": 362,
-                "Y": 149
-            },
-            "UpperLevel": {
-                "X": 323,
-                "Y": 56
-            }
-        }
-    },
-    {
-        "Name": "444DDD444",
-        "Amount": 2,
-        "Image": "images/4_4666999.jpg",
-        "Rect": {
-            "TopLeft": {
-                "X": 463,
-                "Y": 5
-            },
-            "BottomRight": {
-                "X": 586,
-                "Y": 179
-            }
-        },
-        "Depth": {
-            "LowerLevel": {
-                "X": 525,
-                "Y": 124
+                "X": 517,
+                "Y": 92
             },
             "UpperLevel": {
                 "X": 459,
-                "Y": 23
+                "Y": 139
             }
         }
     },
     {
-        "Name": "555EEE555",
-        "Amount": 4,
+        "Name": "4142865",
+        "Amount": 2,
         "Image": "images/5_4142865.jpg",
         "Rect": {
             "TopLeft": {
-                "X": 91,
+                "X": 92,
                 "Y": 208
             },
             "BottomRight": {
-                "X": 202,
-                "Y": 352
+                "X": 201,
+                "Y": 351
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 167,
-                "Y": 303
+                "X": 148,
+                "Y": 282
             },
             "UpperLevel": {
                 "X": 206,
-                "Y": 217
+                "Y": 239
             }
         }
     },
     {
-        "Name": "666FFF666",
-        "Amount": 1,
+        "Name": "6089119",
+        "Amount": 2,
         "Image": "images/6_6089119.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 211,
-                "Y": 208
+                "Y": 209
             },
             "BottomRight": {
                 "X": 317,
-                "Y": 349
+                "Y": 351
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 251,
-                "Y": 258
+                "X": 261,
+                "Y": 252
             },
             "UpperLevel": {
-                "X": 321,
-                "Y": 300
+                "X": 323,
+                "Y": 319
             }
         }
     },
     {
-        "Name": "Item#7",
-        "Amount": 2,
+        "Name": "4206482",
+        "Amount": 3,
         "Image": "images/7_4206482.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 327,
-                "Y": 207
+                "Y": 208
             },
             "BottomRight": {
                 "X": 434,
-                "Y": 350
+                "Y": 351
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 355,
-                "Y": 305
+                "X": 389,
+                "Y": 284
             },
             "UpperLevel": {
-                "X": 322,
-                "Y": 250
+                "X": 323,
+                "Y": 247
             }
         }
     },
     {
-        "Name": "888",
-        "Amount": 3,
+        "Name": "6321747",
+        "Amount": 2,
         "Image": "images/8_6321747.jpg",
         "Rect": {
             "TopLeft": {
                 "X": 445,
-                "Y": 207
+                "Y": 208
             },
             "BottomRight": {
-                "X": 555,
-                "Y": 350
+                "X": 554,
+                "Y": 351
             }
         },
         "Depth": {
             "LowerLevel": {
-                "X": 468,
-                "Y": 310
+                "X": 497,
+                "Y": 285
             },
             "UpperLevel": {
-                "X": 438,
-                "Y": 217
+                "X": 440,
+                "Y": 237
             }
         }
     }

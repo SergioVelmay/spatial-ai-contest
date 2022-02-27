@@ -100,6 +100,7 @@ def IsRectInsideItemRect(rect: Rect, x1: int, y1: int, x2: int, y2: int):
     return top_left_value and bot_right_value
 
 def IsDepthInRangeZ(depth: int, lower_z: int, upper_z: int):
-    lower_value = lower_z > depth
-    upper_value = upper_z < depth
-    return lower_value and upper_value
+    hand_z = depth + 15
+    lower_range = lower_z > hand_z
+    upper_range = upper_z < hand_z
+    return lower_range and upper_range
