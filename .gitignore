@@ -130,3 +130,6 @@ dmypy.json
 
 # recordings folder
 depth-recording/recordings/
+
+# custom vision secrets
+custom-vision/secrets.json
