@@ -133,3 +133,6 @@ depth-recording/recordings/
 
 # custom vision secrets
 custom-vision/secrets.json
+
+# dataset folder
+hand-landmarks/dataset/

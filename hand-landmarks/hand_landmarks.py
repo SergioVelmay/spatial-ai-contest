@@ -6,20 +6,23 @@ import cv2
 from pathlib import Path
 import time
 import argparse
+import uuid
+from datetime import datetime
 
 def to_planar(arr: np.ndarray, shape: tuple) -> np.ndarray:
     resized = cv2.resize(arr, shape, interpolation=cv2.INTER_NEAREST).transpose(2,0,1)
     return resized
 
 class HandLandmarks:
-    def __init__(self,
-                pd_path="models/palm_detection.blob", 
-                pd_score_threshold=0.5,
-                pd_nms_threshold=0.3,
-                hl_path="models/hand_landmarks.blob",
-                hl_score_threshold=0.4,
-                show_landmarks=True,
-                show_hand_box=True):
+    def __init__(
+        self,
+        pd_path="models/palm_detection.blob", 
+        pd_score_threshold=0.5,
+        pd_nms_threshold=0.3,
+        hl_path="models/hand_landmarks.blob",
+        hl_score_threshold=0.4,
+        show_landmarks=True,
+        show_hand_box=True):
 
         self.pd_path = pd_path
         self.pd_score_threshold = pd_score_threshold
@@ -29,24 +32,25 @@ class HandLandmarks:
         self.show_landmarks=show_landmarks
         self.show_hand_box = show_hand_box
 
-        anchor_options = mpu.SSDAnchorOptions(num_layers=4, 
-                                min_scale=0.1484375,
-                                max_scale=0.75,
-                                input_size_height=128,
-                                input_size_width=128,
-                                anchor_offset_x=0.5,
-                                anchor_offset_y=0.5,
-                                strides=[8, 16, 16, 16],
-                                aspect_ratios= [1.0],
-                                reduce_boxes_in_lowest_layer=False,
-                                interpolated_scale_aspect_ratio=1.0,
-                                fixed_anchor_size=True)
+        anchor_options = mpu.SSDAnchorOptions(
+            num_layers=4, 
+            min_scale=0.1484375,
+            max_scale=0.75,
+            input_size_height=128,
+            input_size_width=128,
+            anchor_offset_x=0.5,
+            anchor_offset_y=0.5,
+            strides=[8, 16, 16, 16],
+            aspect_ratios= [1.0],
+            reduce_boxes_in_lowest_layer=False,
+            interpolated_scale_aspect_ratio=1.0,
+            fixed_anchor_size=True)
 
         self.anchors = mpu.generate_anchors(anchor_options)
         self.nb_anchors = self.anchors.shape[0]
 
-        self.preview_width = 1280
-        self.preview_height = 720
+        self.preview_width = 1920
+        self.preview_height = 1080
 
         self.frame_size = None
 
@@ -118,6 +122,7 @@ class HandLandmarks:
     def hl_render(self, frame, original_frame, region):
         cropped_frame = None
         hand_bbox = []
+        palm_bbox = []
         palmar_text = ""
         if region.hl_score > self.hl_score_threshold:
             palmar = True
@@ -128,11 +133,12 @@ class HandLandmarks:
             hl_xy = np.squeeze(cv2.transform(hl_xy, mat)).astype(np.int)
             
             if self.show_landmarks:
-                list_connections = [[0, 1, 2, 3, 4], 
-                                    [5, 6, 7, 8], 
-                                    [9, 10, 11, 12],
-                                    [13, 14 , 15, 16],
-                                    [17, 18, 19, 20]]
+                list_connections = [
+                    [0, 1, 2, 3, 4], 
+                    [5, 6, 7, 8], 
+                    [9, 10, 11, 12],
+                    [13, 14 , 15, 16],
+                    [17, 18, 19, 20]]
                 palm_line = [np.array([hl_xy[point] for point in [0, 5, 9, 13, 17, 0]])]
                 
                 cv2.polylines(frame, palm_line, False, (255, 255, 255), 1, cv2.LINE_AA)
@@ -144,8 +150,8 @@ class HandLandmarks:
                     cv2.polylines(frame, line, False, (255, 255, 255), 1, cv2.LINE_AA)
 
                     for point in finger:
-                            pt = hl_xy[point]
-                            cv2.drawMarker(frame, (pt[0], pt[1]), (0, 0, 0), cv2.MARKER_CROSS, 5, 1, cv2.LINE_AA)
+                        pt = hl_xy[point]
+                        cv2.drawMarker(frame, (pt[0], pt[1]), (0, 0, 0), cv2.MARKER_CROSS, 5, 1, cv2.LINE_AA)
 
             if region.handedness > 0.5:
                 palmar_text = "Right: "
@@ -197,9 +203,10 @@ class HandLandmarks:
                 y1 = int(y1_float*new_h)
                 x2 = int(x2_float*new_w)
                 y2 = int(y2_float*new_h)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (36, 152, 0), 2)
+                palm_bbox = [x1, y1, x2, y2]
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (36, 0, 152), 2)
 
-        return cropped_frame, region.handedness, hand_bbox, palmar_text
+        return cropped_frame, region.handedness, hand_bbox, palm_bbox, palmar_text
 
     def run(self):
         device = dai.Device(self.create_pipeline())
@@ -228,7 +235,7 @@ class HandLandmarks:
             frame_nn.setData(to_planar(video_frame, (self.pd_input_length, self.pd_input_length)))
             q_pd_in.send(frame_nn)
 
-            annotated_frame = video_frame.copy()
+            original_frame = video_frame.copy()
             
             inference = q_pd_out.get()
             self.pd_postprocess(inference)
@@ -238,14 +245,34 @@ class HandLandmarks:
                 nn_data = dai.NNData()   
                 nn_data.setLayer("input_1", to_planar(img_hand, (self.hl_input_length, self.hl_input_length)))
                 q_hl_in.send(nn_data)
+            
+            handedness = 0
+            palm_bbox = []
 
             for i,r in enumerate(self.regions):
                 inference = q_hl_out.get()
                 self.hl_postprocess(r, inference)
-                hand_frame, handedness, hand_bbox, palmar_text = self.hl_render(video_frame, annotated_frame, r)
+                hand_frame, handedness, hand_bbox, palm_bbox, palmar_text = self.hl_render(video_frame, original_frame, r)
+
+            training_dataset = False
+
+            if training_dataset and len(palm_bbox) == 4:
+                random_uuid = uuid.uuid4()
+                date_string = (datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
+                for i,r in enumerate(self.regions):
+                    # hand_image = mpu.warp_rect_img(r.rect_points, original_frame, 416, 416)
+                    y_percentage = int((palm_bbox[3]-palm_bbox[1])*0.125)
+                    x_percentage = int((palm_bbox[2]-palm_bbox[0])*0.125)
+                    hand_image = original_frame[palm_bbox[1]-(2*y_percentage):palm_bbox[3], palm_bbox[0]-x_percentage:palm_bbox[2]+x_percentage]
+                    if hand_image is not None:
+                        cv2.imshow("Dataset Image", hand_image)
+                        # image_name = 'dataset/' + str(random_uuid) + '_' + str(i) + '.jpg'
+                        image_name = 'dataset/' + date_string + '_' + str(i) + '.png'
+                        cv2.imwrite(image_name, hand_image)
 
             video_frame = video_frame[self.pad_h:self.pad_h+h, self.pad_w:self.pad_w+w]
             cv2.imshow("Hand Landmarks", video_frame)
+
             key = cv2.waitKey(1) 
             if key == ord('q') or key == 27:
                 break
