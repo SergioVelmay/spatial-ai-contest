@@ -94,3 +94,11 @@ cd poka-yoke-picking
 ```
 python poka_yoke_picking.py
 ```
+
+- Custom Vision demo
+```
+cd custom-vision
+```
+```
+python create_project.py
+```

@@ -3,3 +3,4 @@ opencv-python
 depthai
 rosbags
 pillow
+azure-cognitiveservices-vision-customvision
