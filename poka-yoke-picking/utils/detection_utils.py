@@ -14,7 +14,7 @@ class Detection:
         self.PalmScoreThreshold = 0.6
         self.PalmNmsThreshold = 0.3
 
-        self.CountInputLength = 512
+        self.CountInputLength = 416
         self.CountScoreThreshold = 0.85
         self.CountNmsThreshold = 0.45
 

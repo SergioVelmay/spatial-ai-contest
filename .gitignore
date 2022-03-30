@@ -109,6 +109,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.venv-openvino
+venv-openvino/
+venv-openvino.back/
 
 # Spyder project settings
 .spyderproject
