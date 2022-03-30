@@ -136,3 +136,6 @@ custom-vision/secrets.json
 
 # dataset folder
 hand-landmarks/dataset/
+
+# custom vision model folder
+poka-yoke-picking/models/custom-vision/
