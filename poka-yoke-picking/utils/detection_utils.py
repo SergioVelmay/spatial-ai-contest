@@ -14,6 +14,10 @@ class Detection:
         self.PalmScoreThreshold = 0.6
         self.PalmNmsThreshold = 0.3
 
+        self.CountInputLength = 512
+        self.CountScoreThreshold = 0.85
+        self.CountNmsThreshold = 0.45
+
     def CreatePipeline(self):
         pipeline = dai.Pipeline()
         
@@ -69,6 +73,15 @@ class Detection:
         palm_out.setStreamName("palm_out")
         palm_nn.out.link(palm_out.input)
 
+        count_nn = pipeline.createNeuralNetwork()
+        count_nn.setBlobPath(str(Path("models/count_detection.blob").resolve().absolute()))
+        count_in = pipeline.createXLinkIn()
+        count_in.setStreamName("count_in")
+        count_in.out.link(count_nn.input)
+        count_out = pipeline.createXLinkOut()
+        count_out.setStreamName("count_out")
+        count_nn.out.link(count_out.input)
+
         return pipeline
     
     def ToPlanar(self, array, shape):
@@ -97,11 +110,30 @@ class Detection:
         scores = np.array(inference.getLayerFp16("classificators"), dtype=np.float16) 
         boxes = np.array(inference.getLayerFp16("regressors"), dtype=np.float16).reshape((nb_anchors, 18))
         
-        self.regions = mpu.decode_bboxes(self.PalmScoreThreshold, scores, boxes, anchors)
-        self.regions = mpu.non_max_suppression(self.regions, self.PalmNmsThreshold)
+        self.regions_palm = mpu.decode_bboxes(self.PalmScoreThreshold, scores, boxes, anchors)
+        self.regions_palm = mpu.non_max_suppression(self.regions_palm, self.PalmNmsThreshold)
 
-        mpu.detections_to_rect(self.regions)
-        mpu.rect_transformation(self.regions, self.frame_size, self.frame_size)
+        mpu.detections_to_rect(self.regions_palm)
+        mpu.rect_transformation(self.regions_palm, self.frame_size, self.frame_size)
+
+    def GetRectFromRegion(self, frame: np.ndarray, region: mpu.HandRegion):
+        x1_float = region.pd_box[0]
+        y1_float = region.pd_box[1]
+        x2_float = x1_float + region.pd_box[2]
+        y2_float = y1_float + region.pd_box[3]
+        h, w = frame.shape[:2]
+        frame_size = max(h, w)
+        pad_h = int((frame_size - h)/2)
+        pad_w = int((frame_size - w)/2)
+        x1 = int(x1_float*frame_size) - pad_w
+        y1 = int(y1_float*frame_size) - pad_h
+        x2 = int(x2_float*frame_size) - pad_w
+        y2 = int(y2_float*frame_size) - pad_h
+        return x1, y1, x2, y2
+
+    def CalculateRectFromRegion(self, color_image: np.ndarray, region: mpu.HandRegion):
+        x1, y1, x2, y2 = self.GetRectFromRegion(color_image, region)
+        return x1, y1, x2, y2
 
     def StartMainLoop(self):
         threading.Thread(target=self.Run, daemon=True).start()
@@ -116,6 +148,9 @@ class Detection:
         q_palm_in = device.getInputQueue(name="palm_in")
         q_palm_out = device.getOutputQueue(name="palm_out", maxSize=4, blocking=True)
 
+        q_count_in = device.getInputQueue(name="count_in")
+        q_count_out = device.getOutputQueue(name="count_out", maxSize=4, blocking=True)
+
         while True:
             latestPacket = {}
             latestPacket["color"] = None
@@ -127,7 +162,7 @@ class Detection:
                 if len(packets) > 0:
                     latestPacket[queueName] = packets[-1]
 
-            copiaColor = None
+            color_image_copy = None
 
             if latestPacket["color"] is not None:
                 frame_color = latestPacket["color"].getCvFrame()
@@ -137,16 +172,37 @@ class Detection:
                 self.pad_h = int((self.frame_size - h)/2)
                 self.pad_w = int((self.frame_size - w)/2)
 
-                copiaColor = cv2.copyMakeBorder(frame_color, self.pad_h, self.pad_h, self.pad_w, self.pad_w, cv2.BORDER_CONSTANT)
+                color_image_copy = cv2.copyMakeBorder(frame_color, self.pad_h, self.pad_h, self.pad_w, self.pad_w, cv2.BORDER_CONSTANT)
                 
-                frame_nn = dai.ImgFrame()
-                frame_nn.setWidth(self.PalmInputLength)
-                frame_nn.setHeight(self.PalmInputLength)
-                frame_nn.setData(self.ToPlanar(copiaColor, (self.PalmInputLength, self.PalmInputLength)))
-                q_palm_in.send(frame_nn)
+                frame_nn_palm = dai.ImgFrame()
+                frame_nn_palm.setWidth(self.PalmInputLength)
+                frame_nn_palm.setHeight(self.PalmInputLength)
+                frame_nn_palm.setData(self.ToPlanar(color_image_copy, (self.PalmInputLength, self.PalmInputLength)))
+                q_palm_in.send(frame_nn_palm)
                 
                 inference = q_palm_out.get()
                 self.PalmPostprocess(inference)
+
+                palm_image = None
+
+                for region in self.regions_palm:
+                    xMin, yMin, xMax, yMax = self.CalculateRectFromRegion(frame_color, region)
+                    y_percentage = int((yMax-yMin)*0.125)
+                    x_percentage = int((xMax-xMin)*0.125)
+                    palm_image = frame_color[yMin-(2*y_percentage):yMax, xMin-x_percentage:xMax[2]+x_percentage]
+
+                self.regions_count = None
+
+                if palm_image is not None:
+
+                    frame_nn_count = dai.ImgFrame()
+                    frame_nn_count.setWidth(self.CountInputLength)
+                    frame_nn_count.setHeight(self.CountInputLength)
+                    frame_nn_count.setData(self.ToPlanar(color_image_copy, (self.CountInputLength, self.CountInputLength)))
+                    q_count_in.send(frame_nn_count)
+                    
+                    inference = q_count_out.get()
+                    self.CountPostprocess(inference)
             
             if latestPacket["depth"] is not None:
                 frame_depth = latestPacket["depth"].getFrame()
@@ -156,6 +212,6 @@ class Detection:
                 frame_depth = np.ascontiguousarray(frame_depth)
 
             if frame_color is not None and frame_depth is not None:
-                self.DrawImage(frame_color, frame_depth, self.regions)
+                self.DrawImage(frame_color, frame_depth, self.regions_palm)
                 frame_color = None
                 frame_depth = None
