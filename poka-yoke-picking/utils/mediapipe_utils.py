@@ -175,10 +175,10 @@ def rect_transformation(regions, w, h):
         region.rect_points = rotated_rect_to_points(region.rect_x_center_a, region.rect_y_center_a, region.rect_w_a, region.rect_h_a, region.rotation, w, h)
 
 def warp_rect_img(rect_points, img, w, h):
-        src = np.array(rect_points[1:], dtype=np.float32)
-        dst = np.array([(0, 0), (h, 0), (h, w)], dtype=np.float32)
-        mat = cv2.getAffineTransform(src, dst)
-        return cv2.warpAffine(img, mat, (w, h))
+    src = np.array(rect_points[1:], dtype=np.float32)
+    dst = np.array([(0, 0), (h, 0), (h, w)], dtype=np.float32)
+    mat = cv2.getAffineTransform(src, dst)
+    return cv2.warpAffine(img, mat, (w, h))
 
 def distance(a, b):
     return np.linalg.norm(a-b)
