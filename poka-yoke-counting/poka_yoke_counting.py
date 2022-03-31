@@ -1,13 +1,14 @@
 import os
 import json
 import cv2
+import math
 import numpy as np
 from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
 from PIL import ImageTk
 from PIL import Image as PIL_Image
-from utils.picking_utils import *
+from utils.counting_utils import *
 from utils.detection_utils import *
 from utils.drawing_utils import *
 
@@ -22,6 +23,14 @@ class PokaYokePicking():
         self.BindAllMouseEvents()
         self.SetAddNewItemButton()
         self.SetBlendScaleSection()
+        self.SetDetectionWidgets()
+    
+    def SetDetectionWidgets(self):
+        for index in range(8):
+            self.DetectionLabels.append(Label(self.Window.ImagesLabel, bg=COLOR_TK_DEFAULT))
+            left = (index%4)*80
+            top = math.floor(index/4)*80
+            self.DetectionLabels[index].place(w=72, h=72, x=left, y=top)
 
     def SetAllAttributes(self):
         self.PickingItems = []
@@ -52,6 +61,7 @@ class PokaYokePicking():
         self.SaveButtons = []
         self.CancelButtons = []
         self.HiddenLabels = []
+        self.DetectionLabels = []
         # variables lists
         self.OrderValues = []
         self.EyeValues = []
@@ -435,6 +445,17 @@ class PokaYokePicking():
         self.ImageLabels[index].image_tk = image_tk
         self.ImageLabels[index]['image'] = image_tk
 
+    def SetDetectionImage(self, index: int, name: str):
+        path = 'images/' + name + '.jpg'
+        image_pil = PIL_Image.open(path)
+        image_tk = ImageTk.PhotoImage(image=image_pil)
+        self.DetectionLabels[index].image_tk = image_tk
+        self.DetectionLabels[index]['image'] = image_tk
+
+    def RemoveDetectionImage(self, index: int):
+        self.DetectionLabels[index].image_tk = None
+        self.DetectionLabels[index]['image'] = None
+
     def EditButtonClick(self, index: int):
         if self.EditValues[index].get():
             self.HiddenLabels[index].place_forget()
@@ -601,7 +622,7 @@ class PokaYokePicking():
         self.BlendValue = IntVar(value=50)
         Scale(self.Window.StreamingFrame, from_=0, to=100, orient=HORIZONTAL, showvalue=0, variable=self.BlendValue).place(w=545, h=22, x=45, y=366)
 
-    def DrawImage(self, color_image: np.ndarray, depth_image: np.ndarray, hand_regions: list):
+    def DrawImage(self, color_image: np.ndarray, depth_image: np.ndarray, hand_regions: list, counting_image: np.ndarray, part_detections: list):
         scaled_color_image = cv2.resize(color_image, (640, 360), interpolation = cv2.INTER_AREA)
         scaled_depth_image = cv2.resize(depth_image, (640, 360), interpolation = cv2.INTER_AREA)
         blended_image = self.GetBlendedImage(scaled_color_image, scaled_depth_image)
@@ -653,34 +674,73 @@ class PokaYokePicking():
                     else:
                         cv2.line(blended_image, (lower.X, lower.Y), (self.MouseX, self.MouseY), COLOR_CV_WHITE, 1)
 
+        for index, _ in enumerate(self.DetectionLabels):
+                self.RemoveDetectionImage(index)
+
         if self.CurrentItem is not None:
-            hand_color = COLOR_CV_WHITE
             current_rect = self.PickingItems[self.CurrentItem].Rect
             current_point1 = (current_rect.TopLeft.X, current_rect.TopLeft.Y)
             current_point2 = (current_rect.BottomRight.X, current_rect.BottomRight.Y)
-            cv2.rectangle(blended_image, current_point1, current_point2, hand_color, 2)
+            cv2.rectangle(blended_image, current_point1, current_point2, COLOR_CV_WHITE, 2)
+
+            target_count = int(self.AmountLabels[self.CurrentItem]['text'])
+            for index, _ in enumerate(self.DetectionLabels):
+                if index < target_count:
+                    image_name = str(self.CurrentItem + 1) + '_' + self.NameLabels[self.CurrentItem]['text']
+                    self.SetDetectionImage(index, image_name)
 
         pil_image = PIL_Image.fromarray(blended_image)
         image_tk = ImageTk.PhotoImage(image=pil_image)
         self.Window.VideoLabel.image_tk = image_tk
         self.Window.VideoLabel['image'] = image_tk
-
-        counting_image = None
-        
-        if color_image is not None:
-            frame_color = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
-
-        for region in hand_regions:
-            xMin, yMin, xMax, yMax = CalculatePalmRectFromRegion(frame_color, region)
-            counting_image = frame_color[yMin:yMax, xMin:xMax]
         
         if counting_image is not None:
-            predictions = self.part_counting.Infer(counting_image)
-            print(predictions)
+            count_color = COLOR_CV_WHITE
+            counting_image = cv2.cvtColor(counting_image, cv2.COLOR_BGR2RGB)
+            crop_length = 280
+            counting_image = cv2.resize(counting_image, (crop_length, crop_length), interpolation=cv2.INTER_NEAREST)
+            if self.CurrentItem is not None:
+                target_count = int(self.AmountLabels[self.CurrentItem]['text'])
+                count_detections = 0
+                for index, detection in enumerate(part_detections):
+                    x1 = int(crop_length*detection.Box.Left)
+                    y1 = int(crop_length*detection.Box.Top)
+                    x2 = x1 + int(crop_length*detection.Box.Width)
+                    y2 = y1 + int(crop_length*detection.Box.Height)
+
+                    label_code = detection.Label[2:]
+
+                    if label_code == self.NameLabels[self.CurrentItem]['text']:
+                        count_color = COLOR_CV_GREEN
+                        count_detections = count_detections + 1
+                        if count_detections <= target_count:
+                            self.SetDetectionImage(index, 'ok_' + label_code)
+                        else:
+                            self.SetDetectionImage(index, 'ko_' + label_code)
+                    else:
+                        count_color = COLOR_CV_RED
+                        self.SetDetectionImage(index, 'ko_' + label_code)
+
+                    cv2.rectangle(counting_image, (x1, y1), (x2, y2), count_color, 2)
+                
+                detections_length = len(part_detections)
+                
+                for index in range(detections_length, 8):
+                    self.RemoveDetectionImage(index)
+                
+                missing_parts = target_count - count_detections
+                if missing_parts > 0:
+                    image_name = str(self.CurrentItem + 1) + '_' + self.NameLabels[self.CurrentItem]['text']
+                    for index in range(detections_length, detections_length + missing_parts):
+                        self.SetDetectionImage(index, image_name)
+
             pil_crop = PIL_Image.fromarray(counting_image)
             crop_tk = ImageTk.PhotoImage(image=pil_crop)
             self.Window.CropLabel.image_tk = crop_tk
             self.Window.CropLabel['image'] = crop_tk
+        else:
+            self.Window.CropLabel.image_tk = None
+            self.Window.CropLabel['image'] = None
 
 def Main():
     if os.path.isfile(CONFIG_FILE_NAME):
