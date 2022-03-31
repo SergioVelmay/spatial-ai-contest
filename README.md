@@ -104,27 +104,53 @@ OpenCV Spatial AI Contest
     ```
 
 - Model Optimization
-    ```
-    python -m venv venv-openvino
-    ```
-    ```
-    venv-openvino\Scripts\activate
-    ```
-    ```
-    python -m pip install --upgrade pip
-    ```
-    ```
-    pip install openvino-dev[tensorflow2]
-    ```
-    ```
-    python -c "from openvino.runtime import Core"
-    ```
-    ```
-    mo -h
-    ```
-    ```
-    mo --input_model C:\...\models\custom-vision\TensorFlow\model.pb --output_dir C:\...\models\custom-vision\TensorFlow --batch 1 --log_level DEBUG
-    ```
+    - OpenVINO 2022
+        ```
+        python -m venv venv-openvino
+        ```
+        ```
+        venv-openvino\Scripts\activate
+        ```
+        ```
+        python -m pip install --upgrade pip
+        ```
+        ```
+        pip install openvino-dev[tensorflow2]
+        ```
+        ```
+        python -c "from openvino.runtime import Core"
+        ```
+        ```
+        mo -h
+        ```
+        ```
+        mo --input_model C:\...\models\custom-vision\TensorFlow\model.pb --output_dir C:\...\models\custom-vision\TensorFlow --batch 1 --log_level DEBUG
+        ```
+    - OpenVINO 2021
+        ```
+        python -m venv venv-openvino-2021
+        ```
+        ```
+        venv-openvino-2021\Scripts\activate
+        ```
+        ```
+        python -m pip install --upgrade pip
+        ```
+        ```
+        pip install openvino-dev==2021.4.2
+        ```
+        ```
+        pip install tensorflow
+        ```
+        ```
+        python -c "from openvino.inference_engine import IECore"
+        ```
+        ```
+        mo -h
+        ```
+        ```
+        mo --input_model C:\...\models\custom-vision\TensorFlow\model.pb --output_dir C:\...\models\custom-vision\TensorFlow --batch 1 --log_level DEBUG
+        ```
 
 - Blob Compilation
     - PiPy.org

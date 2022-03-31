@@ -1,0 +1,202 @@
+[
+    {
+        "Name": "6209519",
+        "Amount": 1,
+        "Image": "images/1_6209519.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 56,
+                "Y": 6
+            },
+            "BottomRight": {
+                "X": 184,
+                "Y": 179
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 134,
+                "Y": 87
+            },
+            "UpperLevel": {
+                "X": 190,
+                "Y": 133
+            }
+        }
+    },
+    {
+        "Name": "4121715",
+        "Amount": 3,
+        "Image": "images/2_4121715.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 194,
+                "Y": 5
+            },
+            "BottomRight": {
+                "X": 316,
+                "Y": 179
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 262,
+                "Y": 116
+            },
+            "UpperLevel": {
+                "X": 323,
+                "Y": 36
+            }
+        }
+    },
+    {
+        "Name": "6299413",
+        "Amount": 2,
+        "Image": "images/3_6299413.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 329,
+                "Y": 5
+            },
+            "BottomRight": {
+                "X": 453,
+                "Y": 179
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 380,
+                "Y": 67
+            },
+            "UpperLevel": {
+                "X": 323,
+                "Y": 134
+            }
+        }
+    },
+    {
+        "Name": "4666999",
+        "Amount": 1,
+        "Image": "images/4_4666999.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 465,
+                "Y": 6
+            },
+            "BottomRight": {
+                "X": 588,
+                "Y": 180
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 517,
+                "Y": 92
+            },
+            "UpperLevel": {
+                "X": 459,
+                "Y": 139
+            }
+        }
+    },
+    {
+        "Name": "4142865",
+        "Amount": 2,
+        "Image": "images/5_4142865.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 92,
+                "Y": 208
+            },
+            "BottomRight": {
+                "X": 201,
+                "Y": 351
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 148,
+                "Y": 282
+            },
+            "UpperLevel": {
+                "X": 206,
+                "Y": 239
+            }
+        }
+    },
+    {
+        "Name": "6089119",
+        "Amount": 1,
+        "Image": "images/6_6089119.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 211,
+                "Y": 209
+            },
+            "BottomRight": {
+                "X": 317,
+                "Y": 351
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 261,
+                "Y": 252
+            },
+            "UpperLevel": {
+                "X": 323,
+                "Y": 319
+            }
+        }
+    },
+    {
+        "Name": "4206482",
+        "Amount": 2,
+        "Image": "images/7_4206482.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 327,
+                "Y": 208
+            },
+            "BottomRight": {
+                "X": 434,
+                "Y": 351
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 389,
+                "Y": 284
+            },
+            "UpperLevel": {
+                "X": 323,
+                "Y": 247
+            }
+        }
+    },
+    {
+        "Name": "6321747",
+        "Amount": 1,
+        "Image": "images/8_6321747.jpg",
+        "Rect": {
+            "TopLeft": {
+                "X": 445,
+                "Y": 208
+            },
+            "BottomRight": {
+                "X": 554,
+                "Y": 351
+            }
+        },
+        "Depth": {
+            "LowerLevel": {
+                "X": 497,
+                "Y": 285
+            },
+            "UpperLevel": {
+                "X": 440,
+                "Y": 237
+            }
+        }
+    }
+]
