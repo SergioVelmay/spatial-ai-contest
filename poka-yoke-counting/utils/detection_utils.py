@@ -4,6 +4,8 @@ import threading
 import depthai as dai
 import utils.mediapipe_utils as mpu
 from pathlib import Path
+from utils.azure_model_utils import *
+from utils.drawing_utils import *
 
 class Detection:
     def __init__(self, drawImage: classmethod):
@@ -13,6 +15,11 @@ class Detection:
         self.PalmInputLength = 128
         self.PalmScoreThreshold = 0.6
         self.PalmNmsThreshold = 0.3
+
+        self.CountInputLength = 416
+
+        self.regions = []
+        self.detections = []
 
     def CreatePipeline(self):
         pipeline = dai.Pipeline()
@@ -69,6 +76,15 @@ class Detection:
         palm_out.setStreamName("palm_out")
         palm_nn.out.link(palm_out.input)
 
+        count_nn = pipeline.createNeuralNetwork()
+        count_nn.setBlobPath(str(Path("models/part_counting.blob").resolve().absolute()))
+        count_in = pipeline.createXLinkIn()
+        count_in.setStreamName("count_in")
+        count_in.out.link(count_nn.input)
+        count_out = pipeline.createXLinkOut()
+        count_out.setStreamName("count_out")
+        count_nn.out.link(count_out.input)
+
         return pipeline
     
     def ToPlanar(self, array, shape):
@@ -107,14 +123,17 @@ class Detection:
         threading.Thread(target=self.Run, daemon=True).start()
 
     def Run(self):
-        device = dai.Device(self.CreatePipeline())
-        device.startPipeline()
+        device = dai.Device()
+        device.startPipeline(self.CreatePipeline())
 
         frame_color = None
         frame_depth = None
 
         q_palm_in = device.getInputQueue(name="palm_in")
         q_palm_out = device.getOutputQueue(name="palm_out", maxSize=4, blocking=True)
+
+        q_count_in = device.getInputQueue(name="count_in")
+        q_count_out = device.getOutputQueue(name="count_out", maxSize=4, blocking=True)
 
         while True:
             latestPacket = {}
@@ -127,7 +146,8 @@ class Detection:
                 if len(packets) > 0:
                     latestPacket[queueName] = packets[-1]
 
-            copiaColor = None
+            mediapipe_color = None
+            counting_image = None
 
             if latestPacket["color"] is not None:
                 frame_color = latestPacket["color"].getCvFrame()
@@ -137,16 +157,36 @@ class Detection:
                 self.pad_h = int((self.frame_size - h)/2)
                 self.pad_w = int((self.frame_size - w)/2)
 
-                copiaColor = cv2.copyMakeBorder(frame_color, self.pad_h, self.pad_h, self.pad_w, self.pad_w, cv2.BORDER_CONSTANT)
+                mediapipe_color = cv2.copyMakeBorder(frame_color, self.pad_h, self.pad_h, self.pad_w, self.pad_w, cv2.BORDER_CONSTANT)
                 
-                frame_nn = dai.ImgFrame()
-                frame_nn.setWidth(self.PalmInputLength)
-                frame_nn.setHeight(self.PalmInputLength)
-                frame_nn.setData(self.ToPlanar(copiaColor, (self.PalmInputLength, self.PalmInputLength)))
-                q_palm_in.send(frame_nn)
+                frame_palm_nn = dai.ImgFrame()
+                frame_palm_nn.setWidth(self.PalmInputLength)
+                frame_palm_nn.setHeight(self.PalmInputLength)
+                frame_palm_nn.setData(self.ToPlanar(mediapipe_color, (self.PalmInputLength, self.PalmInputLength)))
+                q_palm_in.send(frame_palm_nn)
                 
-                inference = q_palm_out.get()
-                self.PalmPostprocess(inference)
+                palm_inference = q_palm_out.get()
+                self.PalmPostprocess(palm_inference)
+
+                for region in self.regions:
+                    xMin, yMin, xMax, yMax = CalculatePalmRectFromRegion(frame_color, region)
+                    counting_image = frame_color[yMin:yMax, xMin:xMax]
+                    break
+
+                if counting_image is not None and counting_image.any():
+                    image_count_data = self.ToPlanar(counting_image, (self.CountInputLength, self.CountInputLength))
+                    frame_count_nn = dai.ImgFrame()
+                    frame_count_nn.setWidth(self.CountInputLength)
+                    frame_count_nn.setHeight(self.CountInputLength)
+                    frame_count_nn.setData(image_count_data)
+                    q_count_in.send(frame_count_nn)
+
+                    count_inference = q_count_out.get()
+
+                    if count_inference is not None:
+                        layer_names = count_inference.getAllLayerNames()
+                        layer_float = count_inference.getLayerFp16(layer_names[0])
+                        self.detections = postprocess(layer_float)
             
             if latestPacket["depth"] is not None:
                 frame_depth = latestPacket["depth"].getFrame()
@@ -156,8 +196,6 @@ class Detection:
                 frame_depth = np.ascontiguousarray(frame_depth)
 
             if frame_color is not None and frame_depth is not None:
-                self.DrawImage(frame_color, frame_depth, self.regions)
-                print(frame_color.shape)
-                print(frame_depth.shape)
+                self.DrawImage(frame_color, frame_depth, self.regions, counting_image, self.detections)
                 frame_color = None
                 frame_depth = None
