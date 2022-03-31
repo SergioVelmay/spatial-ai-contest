@@ -1,4 +1,4 @@
-from utils.picking_utils import *
+from utils.counting_utils import *
 from utils.mediapipe_utils import *
 
 CONFIG_FILE_NAME = 'config.json'
@@ -11,7 +11,7 @@ COLOR_CV_RED = (236, 31, 36)
 
 COLOR_TK_YELLOW = '#FFE61A' # (100, 90, 10)
 COLOR_TK_DEFAULT = '#F0F0F0' # 'SystemWindow'
-COLOR_TK_WHITE = '#FFF' # 'white'
+COLOR_TK_WHITE = '#FFFFFF' # 'white'
 
 DEFAULT_NAME = 'NewItem#'
 

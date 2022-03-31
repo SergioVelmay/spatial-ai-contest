@@ -121,6 +121,12 @@ class Window():
         self.CropLabel = Label(self.StreamingFrame, borderwidth=0, bg='white')
         self.CropLabel.place(w=280, h=280, x=0, y=400)
 
+        self.TextLabel = Label(self.StreamingFrame, borderwidth=0, text='Detections:', font=('arial', 12, 'normal'), anchor=W)
+        self.TextLabel.place(w=320, h=40, x=300, y=440)
+
+        self.ImagesLabel = Label(self.StreamingFrame, borderwidth=0)
+        self.ImagesLabel.place(w=320, h=160, x=300, y=480)
+
         self.Root.protocol('WM_DELETE_WINDOW', self.OnClosingEvent)
 
     def StartMainLoop(self):
