@@ -694,7 +694,7 @@ class PokaYokePicking():
         self.Window.VideoLabel.image_tk = image_tk
         self.Window.VideoLabel['image'] = image_tk
         
-        if counting_image is not None:
+        if counting_image is not None and counting_image.any():
             count_color = COLOR_CV_WHITE
             counting_image = cv2.cvtColor(counting_image, cv2.COLOR_BGR2RGB)
             crop_length = 280

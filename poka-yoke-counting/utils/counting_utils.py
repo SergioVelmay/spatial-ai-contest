@@ -102,7 +102,7 @@ class CustomEncoder(JSONEncoder):
 class Window():
     def __init__(self):
         self.Root = Tk()
-        self.Root.wm_title('Poka-yoke Picking')
+        self.Root.wm_title('Poka-yoke Counting')
         self.Root.geometry('1280x720')
         self.Root.resizable(True, True)
 
