@@ -1,20 +1,20 @@
 import numpy as np
-from openvino_utils import Detection
+from utils.openvino_utils import Detection
 
-PROB_THRESHOLD = 0.85
+PROB_THRESHOLD = 0.5
 MAX_DETECTIONS = 5
 
 ANCHOR_BOXES = np.array([[0.573, 0.677], [1.87, 2.06], [3.34, 5.47], [7.88, 3.53], [9.77, 9.17]])
-IOU_THRESHOLD = 0.4
+IOU_THRESHOLD = 0.3
 
 LABELS = []
-with open('../models/part_labels.txt', 'r') as io:
-    LABELS = [label[2:] for label in io]
+with open('models/part_labels.txt', 'r') as io:
+    LABELS = [label[2:].strip() for label in io]
 
 def postprocess(outputs):
     outputs = np.array(outputs)
 
-    outputs = outputs.reshape([1,60,13,13])
+    outputs = outputs.reshape([1,65,13,13])
 
     outputs = np.squeeze(outputs).transpose((1,2,0)).astype(np.float32)
 
