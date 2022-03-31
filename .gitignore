@@ -109,6 +109,12 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.venv-openvino
+venv-openvino/
+venv-openvino.back/
+.venv-openvino-2021
+venv-openvino-2021/
+venv-openvino-2021.back/
 
 # Spyder project settings
 .spyderproject
@@ -136,3 +142,6 @@ custom-vision/secrets.json
 
 # dataset folder
 hand-landmarks/dataset/
+
+# custom vision model folder
+poka-yoke-counting/models/custom-vision/
