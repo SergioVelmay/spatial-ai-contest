@@ -12,7 +12,7 @@ from utils.counting_utils import *
 from utils.detection_utils import *
 from utils.drawing_utils import *
 
-class PokaYokePicking():
+class PokaYokeCounting():
     def __init__(self, json: list):
         self.Window = Window()
         self.Detection = Detection(self.DrawImage)
@@ -754,7 +754,7 @@ def Main():
             json_file.write(default_json)
             json_file.close()
 
-    picking_poka_yoke = PokaYokePicking(config_data)
+    picking_poka_yoke = PokaYokeCounting(config_data)
     picking_poka_yoke.Detection.StartMainLoop()
     picking_poka_yoke.Window.StartMainLoop()
 
