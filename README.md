@@ -79,6 +79,25 @@ OpenCV Spatial AI Contest
     python user_interface.py
     ```
 
+- Custom Vision demo
+    ```
+    cd custom-vision
+    ```
+    ```
+    python create_project.py
+    ```
+
+- Maximum resolution demo
+    ```
+    cd maximum-resolution
+    ```
+    ```
+    python color_isp_raw_demo.py
+    ```
+    ```
+    python maximum_resolution.py
+    ```
+
 - Picking detection demo
     ```
     cd picking-detection
@@ -93,14 +112,6 @@ OpenCV Spatial AI Contest
     ```
     ```
     python poka_yoke_picking.py
-    ```
-
-- Custom Vision demo
-    ```
-    cd custom-vision
-    ```
-    ```
-    python create_project.py
     ```
 
 - Model Optimization

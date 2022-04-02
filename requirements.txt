@@ -5,3 +5,5 @@ rosbags
 pillow
 azure-cognitiveservices-vision-customvision
 openvino==2021.4.2
+argparse
+numba
