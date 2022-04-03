@@ -528,6 +528,7 @@ class DepthCalculation:
                 blended = cv2.addWeighted(frame_color, self.ColorWeight, frame_depth, self.DepthWeight, 0)
                 pil_image = Image.fromarray(blended)
                 image_tk = ImageTk.PhotoImage(image=pil_image)
+                self.StreamingLabel.configure(image=image_tk)
                 self.StreamingLabel.image_tk = image_tk
                 self.StreamingLabel['image'] = image_tk
                 frame_color = None

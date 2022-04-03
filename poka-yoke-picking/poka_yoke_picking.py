@@ -202,6 +202,7 @@ class PokaYokePicking():
             image_path = self.PickingItems[index].Image
             image_pil = PIL_Image.open(image_path)
             image_tk = ImageTk.PhotoImage(image=image_pil)
+            self.ImageLabels[index].configure(image=image_tk)
             self.ImageLabels[index].image_tk = image_tk
             self.ImageLabels[index]['image'] = image_tk
 
@@ -432,6 +433,7 @@ class PokaYokePicking():
         self.EditItem.Image = path
         image_pil = PIL_Image.open(path)
         image_tk = ImageTk.PhotoImage(image=image_pil)
+        self.ImageLabels[index].configure(image=image_tk)
         self.ImageLabels[index].image_tk = image_tk
         self.ImageLabels[index]['image'] = image_tk
 
@@ -693,6 +695,7 @@ class PokaYokePicking():
 
         pil_image = PIL_Image.fromarray(blended_image)
         image_tk = ImageTk.PhotoImage(image=pil_image)
+        self.Window.VideoLabel.configure(image=image_tk)
         self.Window.VideoLabel.image_tk = image_tk
         self.Window.VideoLabel['image'] = image_tk
 
