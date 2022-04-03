@@ -114,6 +114,14 @@ OpenCV Spatial AI Contest
     python poka_yoke_picking.py
     ```
 
+- Poka-Yoke assembly demo
+    ```
+    cd poka-yoke-assembly
+    ```
+    ```
+    python poka_yoke_assembly.py
+    ```
+
 - Model Optimization
     - OpenVINO 2022
         ```

@@ -140,9 +140,11 @@ depth-recording/recordings/
 # custom vision secrets
 custom-vision/secrets.json
 
-# custom vision model folder
+# custom vision model folders
 poka-yoke-counting/models/custom-vision/
+poka-yoke-assembly/models/custom-vision-classify/
+poka-yoke-assembly/models/custom-vision-detect/
 
-# dataset folderS
+# dataset folders
 hand-landmarks/dataset/
 maximum-resolution/dataset/

@@ -12,7 +12,7 @@ from utils.counting_utils import *
 from utils.detection_utils import *
 from utils.drawing_utils import *
 
-class PokaYokePicking():
+class PokaYokeCounting():
     def __init__(self, json: list):
         self.Window = Window()
         self.Detection = Detection(self.DrawImage)
@@ -212,6 +212,7 @@ class PokaYokePicking():
             image_path = self.PickingItems[index].Image
             image_pil = PIL_Image.open(image_path)
             image_tk = ImageTk.PhotoImage(image=image_pil)
+            self.ImageLabels[index].configure(image=image_tk)
             self.ImageLabels[index].image_tk = image_tk
             self.ImageLabels[index]['image'] = image_tk
 
@@ -442,6 +443,7 @@ class PokaYokePicking():
         self.EditItem.Image = path
         image_pil = PIL_Image.open(path)
         image_tk = ImageTk.PhotoImage(image=image_pil)
+        self.ImageLabels[index].configure(image=image_tk)
         self.ImageLabels[index].image_tk = image_tk
         self.ImageLabels[index]['image'] = image_tk
 
@@ -449,10 +451,12 @@ class PokaYokePicking():
         path = 'images/' + name + '.jpg'
         image_pil = PIL_Image.open(path)
         image_tk = ImageTk.PhotoImage(image=image_pil)
+        self.DetectionLabels[index].configure(image=image_tk)
         self.DetectionLabels[index].image_tk = image_tk
         self.DetectionLabels[index]['image'] = image_tk
 
     def RemoveDetectionImage(self, index: int):
+        self.DetectionLabels[index].configure(image=None)
         self.DetectionLabels[index].image_tk = None
         self.DetectionLabels[index]['image'] = None
 
@@ -691,6 +695,7 @@ class PokaYokePicking():
 
         pil_image = PIL_Image.fromarray(blended_image)
         image_tk = ImageTk.PhotoImage(image=pil_image)
+        self.Window.VideoLabel.configure(image=image_tk)
         self.Window.VideoLabel.image_tk = image_tk
         self.Window.VideoLabel['image'] = image_tk
         
@@ -736,9 +741,11 @@ class PokaYokePicking():
 
             pil_crop = PIL_Image.fromarray(counting_image)
             crop_tk = ImageTk.PhotoImage(image=pil_crop)
+            self.Window.CropLabel.configure(image=image_tk)
             self.Window.CropLabel.image_tk = crop_tk
             self.Window.CropLabel['image'] = crop_tk
         else:
+            self.Window.CropLabel.configure(image=image_tk)
             self.Window.CropLabel.image_tk = None
             self.Window.CropLabel['image'] = None
 
@@ -754,7 +761,7 @@ def Main():
             json_file.write(default_json)
             json_file.close()
 
-    picking_poka_yoke = PokaYokePicking(config_data)
+    picking_poka_yoke = PokaYokeCounting(config_data)
     picking_poka_yoke.Detection.StartMainLoop()
     picking_poka_yoke.Window.StartMainLoop()
 

@@ -1,0 +1,10 @@
+0_base
+1_carrier
+2_bot
+3_mid
+4_top_ko
+4_top_ok
+5_gear_ko
+5_gear_ok
+6_axis
+7_hand
