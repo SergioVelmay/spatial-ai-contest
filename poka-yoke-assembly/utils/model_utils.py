@@ -1,12 +1,15 @@
+import cv2
 import numpy as np
 
-THRESHOLD_CLASSIFY = 0.75
-MAX_CLASSIFICATIONS = 1
+SCORE_THRESHOLD_CLASSIFY = 0.6
+MAX_PREDICTIONS_CLASSIFY = 1
 
-THRESHOLD_DETECT = 0.75
-MAX_DETECTIONS = 3
+SCORE_THRESHOLD_DETECT = 0.45
+MAX_DETECTIONS_DETECT = 3
+
 ANCHOR_BOXES = np.array([[0.573, 0.677], [1.87, 2.06], [3.34, 5.47], [7.88, 3.53], [9.77, 9.17]])
 IOU_THRESHOLD = 0.45
+DETECTION_SHAPE = [1, 35, 13, 13]
 
 CLASSIFY_LABELS = []
 with open('./models/classify-labels.txt', 'r') as io:
@@ -27,35 +30,43 @@ class Boundary:
         self.Top = y
         self.Width = w
         self.Height = h
+        self.Right = x + w
+        self.Bottom = y + h
 
 class Detection(Classification):
     def __init__(self, label, score, x, y, w, h):
         Classification.__init__(self, label, score)
         self.Box = Boundary(x, y, w, h)
 
+def ImagePreprocess(array, shape):
+    return cv2.resize(array, shape, interpolation=cv2.INTER_AREA).transpose(2,0,1)
+
 def ClassifyPostprocess(outputs):
     predictions = list()
     
     for probs in outputs:
-        probs = np.squeeze(probs)
-        top_ind = np.argsort(probs)[-MAX_CLASSIFICATIONS:][::-1]
-        for id in top_ind:
-            if probs[id] > THRESHOLD_CLASSIFY:
-                prob = probs[id] * 100
-                prediction = Classification(CLASSIFY_LABELS[id], prob)
-                predictions.append(prediction)
+        predictions = list()
 
-    return predictions
+        probs = np.array(outputs)
+        top_ids = np.argsort(outputs)[::-1]
+        for id in top_ids:
+            if len(predictions) < MAX_PREDICTIONS_CLASSIFY:
+                prob = probs[id]
+                if prob > SCORE_THRESHOLD_CLASSIFY:
+                    prediction = Classification(CLASSIFY_LABELS[id], prob)
+                    predictions.append(prediction)
+                    
+        return predictions
 
 def DetectPostprocess(outputs):
     outputs = np.array(outputs)
-    outputs = outputs.reshape([1,65,13,13])
+    outputs = outputs.reshape(DETECTION_SHAPE)
     outputs = np.squeeze(outputs).transpose((1,2,0)).astype(np.float32)
 
     boxes, class_probs = extract_bounding_boxes(outputs)
 
     max_probs = np.amax(class_probs, axis=1)
-    index, = np.where(max_probs > THRESHOLD_DETECT)
+    index, = np.where(max_probs > SCORE_THRESHOLD_DETECT)
     index = index[(-max_probs[index]).argsort()]
 
     selected_boxes, selected_classes, selected_probs = non_maximum_suppression(
@@ -65,7 +76,7 @@ def DetectPostprocess(outputs):
 
     for i in range(len(selected_boxes)):
         label = DETECT_LABELS[selected_classes[i]]
-        probability = selected_probs[i] * 100
+        probability = selected_probs[i]
         left = round(float(selected_boxes[i][0]), 8)
         top = round(float(selected_boxes[i][1]), 8)
         width = round(float(selected_boxes[i][2]), 8)
@@ -104,7 +115,7 @@ def logistic(x):
     return np.where(x > 0, 1 / (1 + np.exp(-x)), np.exp(x) / (1 + np.exp(x)))
 
 def non_maximum_suppression(boxes, class_probs):
-    max_detections = min(MAX_DETECTIONS, len(boxes))
+    max_detections = min(MAX_DETECTIONS_DETECT, len(boxes))
     max_probs = np.amax(class_probs, axis=1)
     max_classes = np.argmax(class_probs, axis=1)
 
@@ -116,7 +127,7 @@ def non_maximum_suppression(boxes, class_probs):
 
     while len(selected_boxes) < max_detections:
         i = np.argmax(max_probs)
-        if max_probs[i] < THRESHOLD_DETECT:
+        if max_probs[i] < SCORE_THRESHOLD_DETECT:
             break
 
         selected_boxes.append(boxes[i])

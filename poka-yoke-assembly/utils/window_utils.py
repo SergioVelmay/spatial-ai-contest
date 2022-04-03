@@ -1,4 +1,5 @@
 import cv2
+import math
 import numpy as np
 from tkinter import *
 from tkinter import messagebox
@@ -49,11 +50,14 @@ class AssemblyWindow():
         self.LegoAssemblyLabel.place(w=400, h=120, x=20, y=580)
         SetLabelImageFromPath(self.LegoAssemblyLabel, './assets/lego-assembly.jpg')
 
-        self.InfoFrame = Label(self.MainFrame, width=400, height=260)
-        self.InfoFrame.place(x=440, y=440)
+        self.ScreenshotFrame = Frame(self.MainFrame, width=400, height=260)
+        self.ScreenshotFrame.place(x=440, y=440)
 
-        self.TextLabel = Label(self.InfoFrame, borderwidth=0, text='Detections:', font=FONT_TK_NORMAL, anchor=NW, bg=COLOR_TK_YELLOW)
-        self.TextLabel.place(w=400, h=260, x=0, y=0)
+        self.EvidenceLabels = []
+
+        for index in range(6):
+            self.EvidenceLabels.append(Label(self.ScreenshotFrame, borderwidth=0, bg=COLOR_TK_WHITE))
+            self.EvidenceLabels[index].place(w=120, h=120, x=(index%3)*140, y=math.floor(index/3)*140)
 
         self.ValidationFrame = Frame(self.MainFrame, width=400, height=260)
         self.ValidationFrame.place(x=860, y=440)
@@ -66,15 +70,15 @@ class AssemblyWindow():
 
         for index in range(5):
             self.PartBLabels.append(Label(self.ValidationFrame, borderwidth=0, bg=COLOR_TK_WHITE))
-            self.PartBLabels[index].place(w=72, h=72, x=index*80, y=80)
+            self.PartBLabels[index].place(w=72, h=72, x=index*80, y=94)
             SetLabelImageFromPath(self.PartBLabels[index], './images/b_4565452.jpg')
 
         self.PartCLabel = Label(self.ValidationFrame, borderwidth=0, bg=COLOR_TK_WHITE)
-        self.PartCLabel.place(w=72, h=72, x=0, y=160)
+        self.PartCLabel.place(w=72, h=72, x=0, y=188)
         SetLabelImageFromPath(self.PartCLabel, './images/c_6285646.jpg')
 
         self.PartDLabel = Label(self.ValidationFrame, borderwidth=0, bg=COLOR_TK_WHITE)
-        self.PartDLabel.place(w=72, h=72, x=80, y=160)
+        self.PartDLabel.place(w=72, h=72, x=160, y=188)
         SetLabelImageFromPath(self.PartDLabel, './images/d_6130007.jpg')
 
         self.Root.protocol('WM_DELETE_WINDOW', self.OnClosingEvent)
