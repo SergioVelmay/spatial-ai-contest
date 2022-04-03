@@ -176,8 +176,9 @@ class PokaYokeAssembly:
                         self.current_validation = self.current_validation + 1
             
             if self.current_validation == len(self.step_validations):
+                DrawRectangle(primary_image, (159, 160), (229, 230), COLOR_CV_GREEN)
                 DrawText(primary_image, 'differential assembly', (159-95, 160-12), COLOR_CV_GREEN)
-                DrawText(primary_image, 'in progress', (159-35, 230+25), COLOR_CV_GREEN)
+                DrawText(primary_image, 'completed', (159-30, 230+25), COLOR_CV_GREEN)
 
             SetLabelImageFromArray(self.Window.PrimaryLabel, primary_image)
             SetLabelImageFromArray(self.Window.ModelLabel, model_image)
