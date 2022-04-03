@@ -1,7 +1,9 @@
 import cv2
-import numpy as np
 import threading
 import depthai as dai
+from pathlib import Path
+
+from utils.model_utils import *
 
 class AssemblyCameras:
     def __init__(self, drawImages: classmethod):
@@ -43,6 +45,24 @@ class AssemblyCameras:
         color_out = pipeline.create(dai.node.XLinkOut)
         color_out.setStreamName(self.secondary_stream)
         camera.isp.link(color_out.input)
+
+        classify_nn = pipeline.createNeuralNetwork()
+        classify_nn.setBlobPath(str(Path("./models/classify-model.blob").resolve().absolute()))
+        classify_in = pipeline.createXLinkIn()
+        classify_in.setStreamName("classify_in")
+        classify_in.out.link(classify_nn.input)
+        classify_out = pipeline.createXLinkOut()
+        classify_out.setStreamName("classify_out")
+        classify_nn.out.link(classify_out.input)
+
+        detect_nn = pipeline.createNeuralNetwork()
+        detect_nn.setBlobPath(str(Path("./models/detect-model.blob").resolve().absolute()))
+        detect_in = pipeline.createXLinkIn()
+        detect_in.setStreamName("detect_in")
+        detect_in.out.link(detect_nn.input)
+        detect_out = pipeline.createXLinkOut()
+        detect_out.setStreamName("detect_out")
+        detect_nn.out.link(detect_out.input)
 
         return pipeline
     
